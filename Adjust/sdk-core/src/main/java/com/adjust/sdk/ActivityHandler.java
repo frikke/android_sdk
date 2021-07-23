@@ -17,6 +17,9 @@ import android.content.pm.ResolveInfo;
 import android.net.Uri;
 import android.os.Handler;
 
+import com.adjust.sdk.network.ActivityPackageSender;
+import com.adjust.sdk.network.IActivityPackageSender;
+import com.adjust.sdk.network.UtilNetworking;
 import com.adjust.sdk.scheduler.SingleThreadCachedScheduler;
 import com.adjust.sdk.scheduler.ThreadExecutor;
 import com.adjust.sdk.scheduler.TimerCycle;
@@ -358,6 +361,7 @@ public class ActivityHandler implements IActivityHandler {
     public void finishedTrackingActivity(ResponseData responseData) {
         // redirect session responses to attribution handler to check for attribution information
         if (responseData instanceof SessionResponseData) {
+            logger.debug("Finished tracking session");
             attributionHandler.checkSessionResponse((SessionResponseData)responseData);
             return;
         }
@@ -462,6 +466,16 @@ public class ActivityHandler implements IActivityHandler {
             @Override
             public void run() {
                 sendReftagReferrerI();
+            }
+        });
+    }
+
+    @Override
+    public void sendPreinstallReferrer() {
+        executor.submit(new Runnable() {
+            @Override
+            public void run() {
+                sendPreinstallReferrerI();
             }
         });
     }
@@ -629,11 +643,41 @@ public class ActivityHandler implements IActivityHandler {
     }
 
     @Override
+    public void trackThirdPartySharing(final AdjustThirdPartySharing adjustThirdPartySharing) {
+        executor.submit(new Runnable() {
+            @Override
+            public void run() {
+                trackThirdPartySharingI(adjustThirdPartySharing);
+            }
+        });
+    }
+
+    @Override
+    public void trackMeasurementConsent(final boolean consentMeasurement) {
+        executor.submit(new Runnable() {
+            @Override
+            public void run() {
+                trackMeasurementConsentI(consentMeasurement);
+            }
+        });
+    }
+
+    @Override
     public void trackAdRevenue(final String source, final JSONObject adRevenueJson) {
         executor.submit(new Runnable() {
             @Override
             public void run() {
                 trackAdRevenueI(source, adRevenueJson);
+            }
+        });
+    }
+
+    @Override
+    public void trackAdRevenue(final AdjustAdRevenue adjustAdRevenue) {
+        executor.submit(new Runnable() {
+            @Override
+            public void run() {
+                trackAdRevenueI(adjustAdRevenue);
             }
         });
     }
@@ -694,21 +738,6 @@ public class ActivityHandler implements IActivityHandler {
         return attribution;
     }
 
-    @Override
-    public String getBasePath() {
-        return this.basePath;
-    }
-
-    @Override
-    public String getGdprPath() {
-        return this.gdprPath;
-    }
-
-    @Override
-    public String getSubscriptionPath() {
-        return this.subscriptionPath;
-    }
-
     public InternalState getInternalState() {
         return internalState;
     }
@@ -730,10 +759,7 @@ public class ActivityHandler implements IActivityHandler {
         readSessionPartnerParametersI(adjustConfig.context);
 
         if (adjustConfig.startEnabled != null) {
-            if (adjustConfig.preLaunchActionsArray == null) {
-                adjustConfig.preLaunchActionsArray = new ArrayList<IRunActivityHandler>();
-            }
-            adjustConfig.preLaunchActionsArray.add(new IRunActivityHandler() {
+            adjustConfig.preLaunchActions.preLaunchActionsArray.add(new IRunActivityHandler() {
                 @Override
                 public void run(ActivityHandler activityHandler) {
                     activityHandler.setEnabledI(adjustConfig.startEnabled);
@@ -799,8 +825,24 @@ public class ActivityHandler implements IActivityHandler {
             SharedPreferencesManager sharedPreferencesManager = new SharedPreferencesManager(getContext());
             if (sharedPreferencesManager.getGdprForgetMe()) {
                 gdprForgetMe();
-            } else if (sharedPreferencesManager.getDisableThirdPartySharing()) {
-                disableThirdPartySharing();
+            } else {
+                if (sharedPreferencesManager.getDisableThirdPartySharing()) {
+                    disableThirdPartySharing();
+                }
+                for (AdjustThirdPartySharing adjustThirdPartySharing :
+                        adjustConfig.preLaunchActions.preLaunchAdjustThirdPartySharingArray)
+                {
+                    trackThirdPartySharing(adjustThirdPartySharing);
+                }
+                if (adjustConfig.preLaunchActions.lastMeasurementConsentTracked != null) {
+                    trackMeasurementConsent(
+                            adjustConfig.preLaunchActions.
+                                    lastMeasurementConsentTracked.booleanValue());
+                }
+
+                adjustConfig.preLaunchActions.preLaunchAdjustThirdPartySharingArray =
+                        new ArrayList<>();
+                adjustConfig.preLaunchActions.lastMeasurementConsentTracked = null;
             }
         }
 
@@ -841,15 +883,44 @@ public class ActivityHandler implements IActivityHandler {
 
         UtilNetworking.setUserAgent(adjustConfig.userAgent);
 
-        this.basePath = adjustConfig.basePath;
-        this.gdprPath = adjustConfig.gdprPath;
-        this.subscriptionPath = adjustConfig.subscriptionPath;
+        IActivityPackageSender packageHandlerActivitySender =
+                new ActivityPackageSender(
+                        adjustConfig.urlStrategy,
+                        adjustConfig.basePath,
+                        adjustConfig.gdprPath,
+                        adjustConfig.subscriptionPath,
+                        deviceInfo.clientSdk);
+        packageHandler = AdjustFactory.getPackageHandler(
+                this,
+                adjustConfig.context,
+                toSendI(false),
+                packageHandlerActivitySender);
 
-        packageHandler = AdjustFactory.getPackageHandler(this, adjustConfig.context, toSendI(false));
+        IActivityPackageSender attributionHandlerActivitySender =
+                new ActivityPackageSender(
+                        adjustConfig.urlStrategy,
+                        adjustConfig.basePath,
+                        adjustConfig.gdprPath,
+                        adjustConfig.subscriptionPath,
+                        deviceInfo.clientSdk);
 
-        attributionHandler = AdjustFactory.getAttributionHandler(this, toSendI(false));
+        attributionHandler = AdjustFactory.getAttributionHandler(
+                this,
+                toSendI(false),
+                attributionHandlerActivitySender);
 
-        sdkClickHandler = AdjustFactory.getSdkClickHandler(this, toSendI(true));
+        IActivityPackageSender sdkClickHandlerActivitySender =
+                new ActivityPackageSender(
+                        adjustConfig.urlStrategy,
+                        adjustConfig.basePath,
+                        adjustConfig.gdprPath,
+                        adjustConfig.subscriptionPath,
+                        deviceInfo.clientSdk);
+
+        sdkClickHandler = AdjustFactory.getSdkClickHandler(
+                this,
+                toSendI(true),
+                sdkClickHandlerActivitySender);
 
         if (isToUpdatePackagesI()) {
             updatePackagesI();
@@ -869,7 +940,7 @@ public class ActivityHandler implements IActivityHandler {
             }
         });
 
-        preLaunchActionsI(adjustConfig.preLaunchActionsArray);
+        preLaunchActionsI(adjustConfig.preLaunchActions.preLaunchActionsArray);
         sendReftagReferrerI();
     }
 
@@ -877,6 +948,10 @@ public class ActivityHandler implements IActivityHandler {
         if (activityState == null) return;
         if (!activityState.enabled) return;
         if (activityState.isGdprForgotten) return;
+
+        // sending preinstall referrer doesn't require preinstall tracking flag to be enabled
+        sendPreinstallReferrerI();
+
         if (!adjustConfig.preinstallTrackingEnabled) return;
         if (internalState.hasPreinstallBeenRead()) return;
 
@@ -955,7 +1030,7 @@ public class ActivityHandler implements IActivityHandler {
             }
         }
 
-        // 6. try reading preinstall payload from all content provider with intent action
+        // 6. try reading preinstall payload from all content provider with intent action and with install permission
         if (PreinstallUtil.hasNotBeenRead(Constants.CONTENT_PROVIDER_INTENT_ACTION, readStatus)) {
             List<String> payloadListContentProviderIntentAction = PreinstallUtil.getPayloadsFromContentProviderIntentAction(
                     adjustConfig.context,
@@ -971,10 +1046,27 @@ public class ActivityHandler implements IActivityHandler {
             }
         }
 
-        // 7. try reading preinstall payload from file system (world readable)
+        // 7. try reading preinstall payload from all content provider with intent action and without install permission
+        if (PreinstallUtil.hasNotBeenRead(Constants.CONTENT_PROVIDER_NO_PERMISSION, readStatus)) {
+            List<String> payloadListContentProviderIntentAction = PreinstallUtil.getPayloadsFromContentProviderNoPermission(
+                    adjustConfig.context,
+                    deviceInfo.packageName,
+                    logger);
+
+            if (payloadListContentProviderIntentAction != null && !payloadListContentProviderIntentAction.isEmpty()) {
+                for (String payload : payloadListContentProviderIntentAction) {
+                    sdkClickHandler.sendPreinstallPayload(payload, Constants.CONTENT_PROVIDER_NO_PERMISSION);
+                }
+            } else {
+                readStatus = PreinstallUtil.markAsRead(Constants.CONTENT_PROVIDER_NO_PERMISSION, readStatus);
+            }
+        }
+
+        // 8. try reading preinstall payload from file system (world readable)
         if (PreinstallUtil.hasNotBeenRead(Constants.FILE_SYSTEM, readStatus)) {
             String payloadFileSystem = PreinstallUtil.getPayloadFromFileSystem(
                     deviceInfo.packageName,
+                    adjustConfig.preinstallFilePath,
                     logger);
 
             if (payloadFileSystem != null && !payloadFileSystem.isEmpty()) {
@@ -1066,6 +1158,21 @@ public class ActivityHandler implements IActivityHandler {
                 if (sharedPreferencesManager.getDisableThirdPartySharing()) {
                     disableThirdPartySharingI();
                 }
+                for (AdjustThirdPartySharing adjustThirdPartySharing :
+                        adjustConfig.preLaunchActions.preLaunchAdjustThirdPartySharingArray)
+                {
+                    trackThirdPartySharingI(adjustThirdPartySharing);
+                }
+                if (adjustConfig.preLaunchActions.lastMeasurementConsentTracked != null) {
+                    trackMeasurementConsentI(
+                            adjustConfig.preLaunchActions.
+                                    lastMeasurementConsentTracked.booleanValue());
+                }
+
+                adjustConfig.preLaunchActions.preLaunchAdjustThirdPartySharingArray =
+                        new ArrayList<>();
+                adjustConfig.preLaunchActions.lastMeasurementConsentTracked = null;
+
 
                 activityState.sessionCount = 1; // this is the first session
                 transferSessionPackageI(now);
@@ -1120,6 +1227,8 @@ public class ActivityHandler implements IActivityHandler {
                     activityState.subsessionCount,
                     activityState.sessionCount);
             writeActivityStateI();
+
+            checkForPreinstallI();
 
             // Try to check if there's new referrer information.
             installReferrer.startConnection();
@@ -1288,6 +1397,8 @@ public class ActivityHandler implements IActivityHandler {
     }
 
     private void launchSessionResponseTasksI(SessionResponseData sessionResponseData) {
+        logger.debug("Launching SessionResponse tasks");
+
         // try to update adid from response
         updateAdidI(sessionResponseData.adid);
 
@@ -1493,12 +1604,29 @@ public class ActivityHandler implements IActivityHandler {
 
             if (sharedPreferencesManager.getGdprForgetMe()) {
                 gdprForgetMeI();
-            } else if (sharedPreferencesManager.getDisableThirdPartySharing()) {
-                disableThirdPartySharingI();
+            } else {
+                if (sharedPreferencesManager.getDisableThirdPartySharing()) {
+                    disableThirdPartySharingI();
+                }
+                for (AdjustThirdPartySharing adjustThirdPartySharing :
+                        adjustConfig.preLaunchActions.preLaunchAdjustThirdPartySharingArray)
+                {
+                    trackThirdPartySharingI(adjustThirdPartySharing);
+                }
+                if (adjustConfig.preLaunchActions.lastMeasurementConsentTracked != null) {
+                    trackMeasurementConsentI(
+                            adjustConfig.preLaunchActions.
+                                    lastMeasurementConsentTracked.booleanValue());
+                }
+
+                adjustConfig.preLaunchActions.preLaunchAdjustThirdPartySharingArray =
+                        new ArrayList<>();
+                adjustConfig.preLaunchActions.lastMeasurementConsentTracked = null;
             }
 
             // check if install was tracked
             if (!sharedPreferencesManager.getInstallTracked()) {
+                logger.debug("Detected that install was not tracked at enable time");
                 long now = System.currentTimeMillis();
                 trackNewSessionI(now);
             }
@@ -1619,6 +1747,25 @@ public class ActivityHandler implements IActivityHandler {
         }
 
         sdkClickHandler.sendReftagReferrers();
+    }
+
+    private void sendPreinstallReferrerI() {
+        if (!isEnabledI()) {
+            return;
+        }
+        if (internalState.hasFirstSdkStartNotOcurred()) {
+            return;
+        }
+
+        SharedPreferencesManager sharedPreferencesManager =
+                new SharedPreferencesManager(getContext());
+        String referrerPayload = sharedPreferencesManager.getPreinstallReferrer();
+
+        if (referrerPayload == null || referrerPayload.isEmpty()) {
+            return;
+        }
+
+        sdkClickHandler.sendPreinstallPayload(referrerPayload, Constants.SYSTEM_INSTALLER_REFERRER);
     }
 
     private void sendInstallReferrerI(ReferrerDetails referrerDetails, String referrerApi) {
@@ -2094,6 +2241,53 @@ public class ActivityHandler implements IActivityHandler {
         }
     }
 
+    private void trackThirdPartySharingI(final AdjustThirdPartySharing adjustThirdPartySharing) {
+        if (!checkActivityStateI(activityState)) {
+            adjustConfig.preLaunchActions.preLaunchAdjustThirdPartySharingArray.add(
+                    adjustThirdPartySharing);
+            return;
+        }
+        if (!isEnabledI()) { return; }
+        if (activityState.isGdprForgotten) { return; }
+
+        long now = System.currentTimeMillis();
+        PackageBuilder packageBuilder = new PackageBuilder(
+                adjustConfig, deviceInfo, activityState, sessionParameters, now);
+
+        ActivityPackage activityPackage =
+                packageBuilder.buildThirdPartySharingPackage(adjustThirdPartySharing);
+        packageHandler.addPackage(activityPackage);
+
+        if (adjustConfig.eventBufferingEnabled) {
+            logger.info("Buffered event %s", activityPackage.getSuffix());
+        } else {
+            packageHandler.sendFirstPackage();
+        }
+    }
+
+    private void trackMeasurementConsentI(final boolean consentMeasurement) {
+        if (!checkActivityStateI(activityState)) {
+            adjustConfig.preLaunchActions.lastMeasurementConsentTracked = consentMeasurement;
+            return;
+        }
+        if (!isEnabledI()) { return; }
+        if (activityState.isGdprForgotten) { return; }
+
+        long now = System.currentTimeMillis();
+        PackageBuilder packageBuilder = new PackageBuilder(
+                adjustConfig, deviceInfo, activityState, sessionParameters, now);
+
+        ActivityPackage activityPackage =
+                packageBuilder.buildMeasurementConsentPackage(consentMeasurement);
+        packageHandler.addPackage(activityPackage);
+
+        if (adjustConfig.eventBufferingEnabled) {
+            logger.info("Buffered event %s", activityPackage.getSuffix());
+        } else {
+            packageHandler.sendFirstPackage();
+        }
+    }
+
     private void trackAdRevenueI(String source, JSONObject adRevenueJson) {
         if (!checkActivityStateI(activityState)) { return; }
         if (!isEnabledI()) { return; }
@@ -2104,6 +2298,21 @@ public class ActivityHandler implements IActivityHandler {
         PackageBuilder packageBuilder = new PackageBuilder(adjustConfig, deviceInfo, activityState, sessionParameters, now);
 
         ActivityPackage adRevenuePackage = packageBuilder.buildAdRevenuePackage(source, adRevenueJson);
+        packageHandler.addPackage(adRevenuePackage);
+        packageHandler.sendFirstPackage();
+    }
+
+    private void trackAdRevenueI(AdjustAdRevenue adjustAdRevenue) {
+        if (!checkActivityStateI(activityState)) { return; }
+        if (!isEnabledI()) { return; }
+        if (!checkAdjustAdRevenue(adjustAdRevenue)) { return; }
+        if (activityState.isGdprForgotten) { return; }
+
+        long now = System.currentTimeMillis();
+
+        PackageBuilder packageBuilder = new PackageBuilder(adjustConfig, deviceInfo, activityState, sessionParameters, now);
+
+        ActivityPackage adRevenuePackage = packageBuilder.buildAdRevenuePackage(adjustAdRevenue, internalState.isInDelayedStart());
         packageHandler.addPackage(adRevenuePackage);
         packageHandler.sendFirstPackage();
     }
@@ -2265,6 +2474,20 @@ public class ActivityHandler implements IActivityHandler {
         activityState.addOrderId(orderId);
         logger.verbose("Added order ID '%s'", orderId);
         // activity state will get written by caller
+        return true;
+    }
+
+    private boolean checkAdjustAdRevenue(AdjustAdRevenue adjustAdRevenue) {
+        if (adjustAdRevenue == null) {
+            logger.error("Ad revenue object missing");
+            return false;
+        }
+
+        if (!adjustAdRevenue.isValid()) {
+            logger.error("Ad revenue object not initialized correctly");
+            return false;
+        }
+
         return true;
     }
 

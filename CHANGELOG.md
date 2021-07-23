@@ -1,3 +1,77 @@
+### Version 4.28.3 (21st July 2021)
+#### Fixed
+- Fixed missing authorization header in retry requests.
+
+---
+
+### Version 4.28.2 (11th June 2021)
+#### Changed
+- Added deep link URL decoding before parsing its parameters.
+
+---
+
+### Version 4.28.1 (12th May 2021)
+#### Added
+- [beta] Added data residency support for US region. You can choose this setting by calling `setUrlStrategy` method of `AdjustConfig` instance with `AdjustConfig.DATA_RESIDENCY_US` parameter.
+- Added helper class `AdjustLinkResolution` to assist with resolution of links which are wrapping Adjust deep link.
+
+#### Fixed
+- Removed 5 decimal places formatting for ad revenue value.
+
+---
+
+### Version 4.28.0 (26th April 2021)
+#### Added
+- [beta] Added data residency support for Turkey region. You can choose this setting by calling `setUrlStrategy` method of `AdjustConfig` instance with `AdjustConfig.DATA_RESIDENCY_TR` parameter.
+- Added `trackAdRevenue(AdjustAdRevnue)` method to `Adjust` interface to allow tracking of ad revenue by passing `AdjustAdRevnue` as parameter. 
+- Added support for `AppLovin MAX` ad revenue tracking.
+
+#### Changed
+- Removed unused ad revenue constants from `AdjustConfig`.
+
+---
+
+### Version 4.27.0 (17th March 2021)
+#### Added
+- [beta] Added data residency feature. Support for EU data residency region is added. You can choose this setting by calling `setUrlStrategy` method of `AdjustConfig` instance with `AdjustConfig.DATA_RESIDENCY_EU` parameter.
+- Added preinstall tracking with usage of system installer receiver.
+- Added support for MSA SDK v1.0.25 to OAID plugin.
+
+#### Changed
+- Changed the measurement consent parameter name from `sharing` to `measurement`.
+
+---
+
+### Version 4.26.2 (1st February 2021)
+#### Added
+- Added Facebook audience network ad revenue source string.
+
+---
+
+### Version 4.26.1 (27th January 2021)
+#### Fixed
+- Changed minimum supported API version to 17 for `webbridge`, to avoid insecure JavaScript potential injections on lower API versions.
+- Moved reading of install referrer details to background thread after service connection establishes.
+
+---
+
+### Version 4.26.0 (16th January 2021)
+#### Added
+- Added improved measurement consent management and third party sharing system.
+
+---
+
+### Version 4.25.0 (9th December 2020)
+#### Added
+- Added possibility to get cost data information in attribution callback.
+- Added `setNeedsCost(boolean)` method to `AdjustConfig` to indicate if cost data is needed in attribution callback (by default cost data will not be part of attribution callback if not enabled with this setter method).
+- Added `setPreinstallTrackingEnabled` method to `adjust_config.js` to allow enabling of preintall tracking from web bridge plugin.
+
+#### Changed
+- Switched from usage of deprecated [`getNetworkType()`](https://developer.android.com/reference/android/telephony/TelephonyManager#getNetworkType()) method to [`getDataNetworkType()`](https://developer.android.com/reference/android/telephony/TelephonyManager#getDataNetworkType()) on devices running Android 11 or later.
+
+---
+
 ### Version 4.24.1 (10th September 2020)
 #### Added
 - Added support to OAID plugin for MSA SDK v1.0.23.

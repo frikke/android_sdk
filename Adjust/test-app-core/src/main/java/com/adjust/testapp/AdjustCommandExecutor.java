@@ -6,6 +6,7 @@ import android.util.Log;
 import android.util.SparseArray;
 
 import com.adjust.sdk.Adjust;
+import com.adjust.sdk.AdjustAdRevenue;
 import com.adjust.sdk.AdjustAttribution;
 import com.adjust.sdk.AdjustConfig;
 import com.adjust.sdk.AdjustEvent;
@@ -15,6 +16,7 @@ import com.adjust.sdk.AdjustSessionFailure;
 import com.adjust.sdk.AdjustSessionSuccess;
 import com.adjust.sdk.AdjustPlayStoreSubscription;
 import com.adjust.sdk.AdjustTestOptions;
+import com.adjust.sdk.AdjustThirdPartySharing;
 import com.adjust.sdk.LogLevel;
 import com.adjust.sdk.OnAttributionChangedListener;
 import com.adjust.sdk.OnDeeplinkResponseListener;
@@ -22,6 +24,7 @@ import com.adjust.sdk.OnEventTrackingFailedListener;
 import com.adjust.sdk.OnEventTrackingSucceededListener;
 import com.adjust.sdk.OnSessionTrackingFailedListener;
 import com.adjust.sdk.OnSessionTrackingSucceededListener;
+import com.adjust.test_options.TestConnectionOptions;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -76,7 +79,10 @@ public class AdjustCommandExecutor {
             case "sendReferrer": sendReferrer(); break;
             case "gdprForgetMe": gdprForgetMe(); break;
             case "disableThirdPartySharing": disableThirdPartySharing(); break;
+            case "thirdPartySharing" : thirdPartySharing(); break;
+            case "measurementConsent" : measurementConsent(); break;
             case "trackAdRevenue": trackAdRevenue(); break;
+            case "trackAdRevenueV2" : trackAdRevenueV2(); break;
             case "trackSubscription": trackSubscription(); break;
             //case "testBegin": testBegin(); break;
             // case "testEnd": testEnd(); break;
@@ -146,6 +152,7 @@ public class AdjustCommandExecutor {
                 testOptions.noBackoffWait = noBackoffWaitBoolean;
             }
         }
+        boolean useTestConnectionOptions = false;
         if (command.containsParameter("teardown")) {
             List<String> teardownOptions = command.parameters.get("teardown");
             for (String teardownOption : teardownOptions) {
@@ -154,7 +161,7 @@ public class AdjustCommandExecutor {
                     testOptions.basePath = basePath;
                     testOptions.gdprPath = gdprPath;
                     testOptions.subscriptionPath = subscriptionPath;
-                    testOptions.useTestConnectionOptions = true;
+                    useTestConnectionOptions = true;
                     testOptions.tryInstallReferrer = false;
                 }
                 if (teardownOption.equals("deleteState")) {
@@ -173,7 +180,6 @@ public class AdjustCommandExecutor {
                     testOptions.basePath = null;
                     testOptions.gdprPath = null;
                     testOptions.subscriptionPath = null;
-                    testOptions.useTestConnectionOptions = false;
                 }
                 if (teardownOption.equals("test")) {
                     savedEvents = null;
@@ -186,6 +192,9 @@ public class AdjustCommandExecutor {
             }
         }
         Adjust.setTestOptions(testOptions);
+        if (useTestConnectionOptions) {
+            TestConnectionOptions.setTestConnectionOptions();
+        }
     }
 
     private void config() {
@@ -279,6 +288,12 @@ public class AdjustCommandExecutor {
             adjustConfig.setDeviceKnown(deviceKnown);
         }
 
+        if (command.containsParameter("needsCost")) {
+            String needsCostS = command.getFirstParameterValue("needsCost");
+            boolean needsCost = "true".equals(needsCostS);
+            adjustConfig.setNeedsCost(needsCost);
+        }
+
         if (command.containsParameter("eventBufferingEnabled")) {
             String eventBufferingEnabledS = command.getFirstParameterValue("eventBufferingEnabled");
             boolean eventBufferingEnabled = "true".equals(eventBufferingEnabledS);
@@ -332,6 +347,11 @@ public class AdjustCommandExecutor {
                     MainActivity.testLibrary.addInfoToSend("creative", attribution.creative);
                     MainActivity.testLibrary.addInfoToSend("clickLabel", attribution.clickLabel);
                     MainActivity.testLibrary.addInfoToSend("adid", attribution.adid);
+                    MainActivity.testLibrary.addInfoToSend("costType", attribution.costType);
+                    if (attribution.costAmount != null) {
+                        MainActivity.testLibrary.addInfoToSend("costAmount", attribution.costAmount.toString());
+                    }
+                    MainActivity.testLibrary.addInfoToSend("costCurrency", attribution.costCurrency);
                     MainActivity.testLibrary.sendInfoToServer(localBasePath);
                 }
             });
@@ -623,6 +643,36 @@ public class AdjustCommandExecutor {
         Adjust.disableThirdPartySharing(this.context);
     }
 
+    private void thirdPartySharing() {
+        String isEnabledString =
+                command.getFirstParameterValue("isEnabled");
+        Boolean isEnabledBoolean =
+                Util.strictParseStringToBoolean(isEnabledString);
+
+        AdjustThirdPartySharing adjustThirdPartySharing =
+                new AdjustThirdPartySharing(isEnabledBoolean);
+
+        if (command.parameters.containsKey("granularOptions")) {
+            List<String> granularOptions = command.parameters.get("granularOptions");
+            for (int i = 0; i < granularOptions.size(); i = i + 3) {
+                String partnerName = granularOptions.get(i);
+                String key = granularOptions.get(i + 1);
+                String value = granularOptions.get(i + 2);
+                adjustThirdPartySharing.addGranularOption(partnerName, key, value);
+            }
+        }
+
+        Adjust.trackThirdPartySharing(adjustThirdPartySharing);
+    }
+
+    private void measurementConsent() {
+        String measurementConsentString =
+                command.getFirstParameterValue("isEnabled");
+        boolean measurementConsent = "true".equals(measurementConsentString);
+
+        Adjust.trackMeasurementConsent(measurementConsent);
+    }
+
     private void trackAdRevenue() {
         String adRevenueSource = command.getFirstParameterValue("adRevenueSource");
         String adRevenueJsonString = command.getFirstParameterValue("adRevenueJsonString");
@@ -633,6 +683,58 @@ public class AdjustCommandExecutor {
         } catch (JSONException e) {
             e.printStackTrace();
         }
+    }
+
+    private void trackAdRevenueV2() {
+        String adRevenueSource = command.getFirstParameterValue("adRevenueSource");
+        AdjustAdRevenue adjustAdRevenue = new AdjustAdRevenue(adRevenueSource);
+
+        if (command.parameters.containsKey("revenue")) {
+            List<String> revenueParams = command.parameters.get("revenue");
+            String currency = revenueParams.get(0);
+            Double revenue = Double.valueOf(revenueParams.get(1));
+            adjustAdRevenue.setRevenue(revenue, currency);
+        }
+
+        if (command.parameters.containsKey("adImpressionsCount")) {
+            Integer adImpressionsCount =
+                    Integer.valueOf(command.getFirstParameterValue("adImpressionsCount"));
+            adjustAdRevenue.setAdImpressionsCount(adImpressionsCount);
+        }
+
+        if (command.parameters.containsKey("adRevenueNetwork")) {
+            String adRevenueNetwork = command.getFirstParameterValue("adRevenueNetwork");
+            adjustAdRevenue.setAdRevenueNetwork(adRevenueNetwork);
+        }
+
+        if (command.parameters.containsKey("adRevenueUnit")) {
+            String adRevenueUnit = command.getFirstParameterValue("adRevenueUnit");
+            adjustAdRevenue.setAdRevenueUnit(adRevenueUnit);
+        }
+
+        if (command.parameters.containsKey("adRevenuePlacement")) {
+            String adRevenuePlacement = command.getFirstParameterValue("adRevenuePlacement");
+            adjustAdRevenue.setAdRevenuePlacement(adRevenuePlacement);
+        }
+
+        if (command.parameters.containsKey("callbackParams")) {
+            List<String> callbackParams = command.parameters.get("callbackParams");
+            for (int i = 0; i < callbackParams.size(); i = i + 2) {
+                String key = callbackParams.get(i);
+                String value = callbackParams.get(i + 1);
+                adjustAdRevenue.addCallbackParameter(key, value);
+            }
+        }
+        if (command.parameters.containsKey("partnerParams")) {
+            List<String> partnerParams = command.parameters.get("partnerParams");
+            for (int i = 0; i < partnerParams.size(); i = i + 2) {
+                String key = partnerParams.get(i);
+                String value = partnerParams.get(i + 1);
+                adjustAdRevenue.addPartnerParameter(key, value);
+            }
+        }
+
+        Adjust.trackAdRevenue(adjustAdRevenue);
     }
 
     private void trackSubscription() {

@@ -1,3 +1,12 @@
+**This guide is being retired.**
+
+This README file will be retired shortly. The SDK documentation can now be found on our help center:
+
+* [English][en-helpcenter]
+* [中文][zh-helpcenter]
+* [日本語][ja-helpcenter]
+* [한국어][ko-helpcenter]
+
 ## Summary
 
 This is the Android SDK of Adjust™. You can read more about Adjust™ at [adjust.com].
@@ -35,6 +44,7 @@ Read this in other languages: [English][en-readme], [中文][zh-readme], [日本
    * [Standard deep linking scenario](#dl-standard)
    * [Deferred deep linking scenario](#dl-deferred)
    * [Reattribution via deep links](#dl-reattribution)
+   * [Link resolution](#link-resolution)
 
 ### Event tracking
 
@@ -67,13 +77,17 @@ Read this in other languages: [English][en-readme], [中文][zh-readme], [日本
       * [Google Play Services advertising identifier](#af-gps-adid)
       * [Amazon advertising identifier](#af-amazon-adid)
       * [Adjust device identifier](#af-adid)
-   * [Pre-installed trackers](#af-pre-installed-trackers)
+   * [Preinstalled apps](#af-preinstalled-apps)
    * [Offline mode](#af-offline-mode)
    * [Disable tracking](#af-disable-tracking)
    * [Event buffering](#af-event-buffering)
    * [Background tracking](#af-background-tracking)
    * [GDPR right to be forgotten](#af-gdpr-forget-me)
-   * [Disable third-party sharing](#af-disable-third-party-sharing)
+   * [Third-party sharing](#af-third-party-sharing)
+      * [Disable third-party sharing](#af-disable-third-party-sharing)
+      * [Enable third-party sharing](#af-enable-third-party-sharing)
+   * [Consent measurement](#af-measurement-consent)
+   * [[beta] Data residency](#af-data-residency)
 
 ### Testing and troubleshooting
 
@@ -99,15 +113,17 @@ These are the minimum required steps to integrate the Adjust SDK in your Android
 If you are using Maven, add the following to your `build.gradle` file:
 
 ```gradle
-implementation 'com.adjust.sdk:adjust-android:4.24.1'
-implementation 'com.android.installreferrer:installreferrer:2.1'
+implementation 'com.adjust.sdk:adjust-android:4.28.3'
+implementation 'com.android.installreferrer:installreferrer:2.2'
 ```
 
 If you would prefer to use the Adjust SDK inside web views in your app, please include this additional dependency as well:
 
 ```gradle
-implementation 'com.adjust.sdk:adjust-android-webbridge:4.24.1'
+implementation 'com.adjust.sdk:adjust-android-webbridge:4.28.3'
 ```
+
+**Note**: The minimum supported Android API level for the web view extension is 17 (Jelly Bean).
 
 You can also add the Adjust SDK and web view extension as JAR files, which can be downloaded from our [releases page][releases].
 
@@ -172,7 +188,7 @@ In order to correctly attribute an app install to its source, Adjust needs infor
 In order to support the Google Play Referrer API in your app, please make sure that you have followed our chapter on [adding the SDK to your project](#qs-add-sdk) correctly and that you have following line added to your `build.gradle` file:
 
 ```
-implementation 'com.android.installreferrer:installreferrer:2.1'
+implementation 'com.android.installreferrer:installreferrer:2.2'
 ```
 
 Please follow the directions for your [Proguard settings](#qs-proguard) carefully. Confirm that you have added all the rules mentioned in it, especially the one needed for this feature:
@@ -312,6 +328,7 @@ In your HTML file, import the Adjust Javascript files which are located in the r
 ```html
 <script type="text/javascript" src="adjust.js"></script>
 <script type="text/javascript" src="adjust_event.js"></script>
+<script type="text/javascript" src="adjust_third_party_sharing.js"></script>
 <script type="text/javascript" src="adjust_config.js"></script>
 ```
 
@@ -720,6 +737,33 @@ protected void onNewIntent(Intent intent) {
 
 ```js
 Adjust.appWillOpenUrl(deeplinkUrl);
+```
+
+### <a id="link-resolution"></a>Link resolution
+
+If you are serving deep links from an Email Service Provider (ESP) and need to track clicks through a custom tracking link, you can use the `resolveLink` method of the  `AdjustLinkResolution` class to resolve the link. This ensures that you record the interaction with your email tracking campaigns when a deep link is opened in your application.
+
+The `resolveLink` method takes the following parameters:
+
+- `url` - the deep link that opened the application
+- `resolveUrlSuffixArray` - the custom domains of the configured campaigns that need to be resolved
+- `adjustLinkResolutionCallback` - the callback that will contain the final URL
+
+If the link received does not belong to any of the domains specified in the `resolveUrlSuffixArray`, the callback will forward the deep link URL as is. If the link does contain one of the domains specified, the SDK will attempt to resolve the link and return the resulting deep link to the `callback` parameter. The returned deep link can also be reattributed in the Adjust SDK using the `Adjust.appWillOpenUrl` method.
+
+> **Note**: The SDK will automatically follow up to ten redirects when attempting to resolve the URL. It will return the latest URL it has followed as the `callback` URL, meaning that if there are more than ten redirects to follow the **tenth redirect URL** will be returned.
+
+**Example**
+
+```java
+AdjustLinkResolution.resolveLink(url, 
+                                 new String[]{"example.com"},
+                                 new AdjustLinkResolution.AdjustLinkResolutionCallback() {
+    @Override
+    public void resolvedLinkCallback(Uri resolvedLink) {
+        Adjust.appWillOpenUrl(resolvedLink, getApplicationContext());
+    }
+});
 ```
 
 ## Event tracking
@@ -1339,6 +1383,11 @@ The listener function is called after the SDK receives the final attribution dat
 - `creative` the creative grouping level string of the current attribution.
 - `clickLabel` the click label string of the current attribution.
 - `adid` the Adjust device identifier string.
+- `costType` the cost type string.
+- `costAmount` the cost amount.
+- `costCurrency` the cost currency string.
+
+**Note**: The cost data - `costType`, `costAmount` & `costCurrency` are only available when configured in `AdjustConfig` by calling `setNeedsCost` method. If not configured or configured, but not being part of the attribution, these fields will have value `null`. This feature is available in SDK v4.25.0 and above.
 
 ### <a id="af-subscriptions"></a>Subscription tracking
 
@@ -1406,7 +1455,7 @@ Adjust.trackPlayStoreSubscription(subscription);
 
 ### <a id="af-ad-revenue"></a>Ad revenue tracking
 
-**Note**: This feature is available only in the native SDK v4.18.0 and above.
+**Note**: This ad revenue tracking API is available only in the native SDK v4.28.0 and above.
 
 You can track ad revenue information with Adjust SDK by invoking the following method:
 
@@ -1420,20 +1469,22 @@ You can track ad revenue information with Adjust SDK by invoking the following m
 <td>
 
 ```java
-Adjust.trackAdRevenue(source, payload);
+Adjust.trackAdRevenue(adjustAdRevenue);
 ```
 </td>
 </tr>
 </table>
 
-Parameters of the method which you need to pass are:
-
-- `source` - `String` object which indicates the source of ad revenue info.
-- `payload` - `JSONObject` object which contains ad revenue JSON.
+where `adjustAdRevenue` represents instance of `AdjustAdRevenue` class which is used to pass ad revenue source as well as other ad revenue related info.
 
 Currently we support the below `source` parameter values:
 
-- `AD_REVENUE_MOPUB` - representing MoPub mediation platform (for more information, check [integration guide][sdk2sdk-mopub])
+- `AdjustConfig.AD_REVENUE_APPLOVIN_MAX` - representing AppLovin MAX platform.
+- `AdjustConfig.AD_REVENUE_MOPUB` - representing MoPub platform.
+- `AdjustConfig.AD_REVENUE_ADMOB` - representing AdMob platform.
+- `AdjustConfig.AD_REVENUE_IRONSOURCE` - representing IronSource platform.
+
+**Note**: Additional documentation which explains detailed integration with every of the supported sources will be provided outside of this README. Also, in order to use this feature, additional setup is needed for your app in Adjust dashboard, so make sure to get in touch with our support team to make sure that everything is set up correctly before you start to use this feature.
 
 ### <a id="af-session-event-callbacks"></a>Session and event callbacks
 
@@ -1683,9 +1734,85 @@ let adid = Adjust.getAdid();
 
 **Note**: Information about the **adid** is only available after our backend tracks the app instal. **It is not possible** to access the **adid** value before the SDK has been initialized and the installation of your app has been successfully tracked.
 
-### <a id="af-pre-installed-trackers"></a>Pre-installed trackers
+### <a id="af-preinstalled-apps"></a>Preinstalled apps
 
-If you want to use the Adjust SDK to recognize users whose devices came with your app pre-installed, follow these steps:
+You can use the Adjust SDK to recognize users whose devices had your app preinstalled during manufacturing. Adjust offers two solutions: one which uses the system payload, and one which uses a default tracker. 
+
+In general, we recommend using the system payload solution. However, there are certain use cases which may require the tracker. First check the available [implementation methods](https://help.adjust.com/en/article/pre-install-tracking#Implementation_methods) and your preinstall partner’s preferred method. If you are unsure which solution to implement, reach out to integration@adjust.com
+
+#### Use the system payload
+
+- The Content Provider, System Properties, or File System method is supported from SDK v4.23.0 and above.
+
+- The System Installer Receiver method is supported from SDK v4.27.0 and above.
+
+Enable the Adjust SDK to recognise preinstalled apps by calling `setPreinstallTrackingEnabled` with the parameter `true` after creating the config object:
+
+<table>
+<tr>
+<td>
+<b>Native App SDK</b>
+</td>
+</tr>
+<tr>
+<td>
+
+```java
+adjustConfig.setPreinstallTrackingEnabled(true);
+```
+</td>
+</tr>
+<tr>
+<td>
+<b>Web View SDK</b>
+</td>
+</tr>
+<tr>
+<td>
+
+```js
+adjustConfig.setPreinstallTrackingEnabled(true);
+```
+</td>
+</tr>
+</table>
+
+Depending upon your implmentation method, you may need to make a change to your AndroidManifest.xml file. Find the required code change using the table below.
+
+<table>
+<tr>
+<td>
+  <b>Method</b>
+</td>
+<td>
+  <b>AndroidManifest.xml change</b>
+</td>
+</tr>
+<tr>
+<td>Content Provider</td>
+<td>Add permission:</br>
+
+```
+<uses-permission android:name="com.adjust.preinstall.READ_PERMISSION"/>
+```
+</td>
+</tr>
+<tr>
+<td>System Installer Receiver</td>
+<td>Declare receiver:</br>
+
+```
+<receiver android:name="com.adjust.sdk.AdjustPreinstallReferrerReceiver">
+    <intent-filter>
+        <action android:name="com.attribution.SYSTEM_INSTALLER_REFERRER" />
+    </intent-filter>
+</receiver>
+```
+</td>
+</tr>
+</table>
+
+#### Use a default tracker
 
 - Create a new tracker in your [dashboard].
 - Open your app delegate and set the default tracker of your config:
@@ -1905,9 +2032,11 @@ Upon receiving this information, Adjust will erase the user's data and the Adjus
 
 Please note that even when testing, this decision is permanent. It **is not** reversible.
 
-### <a id="af-disable-third-party-sharing"></a>Disable third-party sharing for specific users
+## <a id="af-third-party-sharing"></a>Third-party sharing for specific users
 
-You can now notify Adjust when a user has exercised their right to stop sharing their data with partners for marketing purposes, but has allowed it to be shared for statistics purposes. 
+You can notify Adjust when a user disables, enables, and re-enables data sharing with third-party partners.
+
+### <a id="af-disable-third-party-sharing"></a>Disable third-party sharing for specific users
 
 Call the following method to instruct the Adjust SDK to communicate the user's choice to disable data sharing to the Adjust backend:
 
@@ -1921,7 +2050,8 @@ Call the following method to instruct the Adjust SDK to communicate the user's c
 <td>
 
 ```java
-Adjust.disableThirdPartySharing(context);
+AdjustThirdPartySharing adjustThirdPartySharing = new AdjustThirdPartySharing(false);
+Adjust.trackThirdPartySharing(adjustThirdPartySharing);
 ```
 </td>
 </tr>
@@ -1934,13 +2064,162 @@ Adjust.disableThirdPartySharing(context);
 <td>
 
 ```js
-Adjust.disableThirdPartySharing();
+let adjustThirdPartySharing = new AdjustThirdPartySharing(false);
+Adjust.trackThirdPartySharing(adjustThirdPartySharing);
 ```
 </td>
 </tr>
 </table>
 
 Upon receiving this information, Adjust will block the sharing of that specific user's data to partners and the Adjust SDK will continue to work as usual.
+
+### <a id="af-enable-third-party-sharing"></a>Enable or re-enable third-party sharing for specific users
+
+Call the following method to instruct the Adjust SDK to communicate the user's choice to share data or change data sharing, to the Adjust backend:
+
+<table>
+<tr>
+<td>
+<b>Native App SDK</b>
+</td>
+</tr>
+<tr>
+<td>
+
+```java
+AdjustThirdPartySharing adjustThirdPartySharing = new AdjustThirdPartySharing(true);
+Adjust.trackThirdPartySharing(adjustThirdPartySharing);
+```
+</td>
+</tr>
+<tr>
+<td>
+<b>Web View SDK</b>
+</td>
+</tr>
+<tr>
+<td>
+
+```js
+let adjustThirdPartySharing = new AdjustThirdPartySharing(true);
+Adjust.trackThirdPartySharing(adjustThirdPartySharing);
+```
+</td>
+</tr>
+</table>
+
+Upon receiving this information, Adjust changes sharing the specific user's data to partners. The Adjust SDK will continue to work as expected.
+
+Call the following method to instruct the Adjust SDK to send the granular options to the Adjust backend:
+
+<table>
+<tr>
+<td>
+<b>Native App SDK</b>
+</td>
+</tr>
+<tr>
+<td>
+
+```java
+AdjustThirdPartySharing adjustThirdPartySharing = new AdjustThirdPartySharing(null);
+adjustThirdPartySharing.addGranularOption("PartnerA", "foo", "bar");
+Adjust.trackThirdPartySharing(adjustThirdPartySharing);
+```
+</td>
+</tr>
+<tr>
+<td>
+<b>Web View SDK</b>
+</td>
+</tr>
+<tr>
+<td>
+
+```js
+let adjustThirdPartySharing = new AdjustThirdPartySharing(null);
+adjustThirdPartySharing.addGranularOption("PartnerA", "foo", "bar");
+Adjust.trackThirdPartySharing(adjustThirdPartySharing);
+```
+</td>
+</tr>
+</table>
+
+### <a id="af-measurement-consent"></a>Consent measurement for specific users
+
+To enable or disable the Data Privacy settings in the Adjust Dashboard, including the consent expiry period and the user data retention period, you need to implement the below method.
+
+Call the following method to instruct the Adjust SDK to communicate the Data Privacy settings, to the Adjust backend:
+
+<table>
+<tr>
+<td>
+<b>Native App SDK</b>
+</td>
+</tr>
+<tr>
+<td>
+
+```java
+Adjust.trackMeasurementConsent(true);
+```
+</td>
+</tr>
+<tr>
+<td>
+<b>Web View SDK</b>
+</td>
+</tr>
+<tr>
+<td>
+
+```js
+Adjust.trackMeasurementConsent(true);
+```
+</td>
+</tr>
+</table>
+
+Upon receiving this information, Adjust enables or disables consent measurement. The Adjust SDK will continue to work as expected.
+
+### <a id="af-data-residency"></a>[beta] Data residency
+
+In order to enable data residency feature, make sure to make a call to `setUrlStrategy` method of the `AdjustConfig` instance with one of the following constants:
+
+<table>
+<tr>
+<td>
+<b>Native App SDK</b>
+</td>
+</tr>
+<tr>
+<td>
+
+```java
+adjustConfig.setUrlStrategy(AdjustConfig.DATA_RESIDENCY_EU); // for EU data residency region
+adjustConfig.setUrlStrategy(AdjustConfig.DATA_RESIDENCY_TR); // for Turkey data residency region
+adjustConfig.setUrlStrategy(AdjustConfig.DATA_RESIDENCY_US); // for US data residency region
+```
+</td>
+</tr>
+<tr>
+<td>
+<b>Web View SDK</b>
+</td>
+</tr>
+<tr>
+<td>
+
+```js
+adjustConfig.setUrlStrategy(AdjustConfig.DataResidencyEU); // for EU data residency region
+adjustConfig.setUrlStrategy(AdjustConfig.DataResidencyTR); // for Turkey data residency region
+adjustConfig.setUrlStrategy(AdjustConfig.DataResidencyUS); // for US data residency region
+```
+</td>
+</tr>
+</table>
+
+**Note:** This feature is currently in beta testing phase. If you are interested in getting access to it, please contact your dedicated account manager or write an email to support@adjust.com. Please, do not turn this setting on before making sure with the support team that this feature is enabled for your app because otherwise SDK traffic will get dropped.
 
 ## Testing and troubleshooting
 
@@ -2036,6 +2315,11 @@ If you want to trigger an event when the app is launched, use the `onCreate` met
 [zh-readme]:  doc/chinese/README.md
 [ja-readme]:  doc/japanese/README.md
 [ko-readme]:  doc/korean/README.md
+
+[en-helpcenter]: https://help.adjust.com/en/developer/android-sdk-documentation
+[zh-helpcenter]: https://help.adjust.com/zh/developer/android-sdk-documentation
+[ja-helpcenter]: https://help.adjust.com/ja/developer/android-sdk-documentation
+[ko-helpcenter]: https://help.adjust.com/ko/developer/android-sdk-documentation
 
 [example-java]:       Adjust/example-app-java
 [example-kotlin]:     Adjust/example-app-kotlin

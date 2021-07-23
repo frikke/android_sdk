@@ -2,21 +2,7 @@ package com.adjust.sdk;
 
 import android.content.Context;
 
-import java.util.Arrays;
 import java.util.List;
-
-import static com.adjust.sdk.Constants.BASE_URL_CN;
-import static com.adjust.sdk.Constants.BASE_URL_IN;
-import static com.adjust.sdk.Constants.FALLBACK_BASE_URLS_CN;
-import static com.adjust.sdk.Constants.FALLBACK_BASE_URLS_IN;
-import static com.adjust.sdk.Constants.FALLBACK_GDPR_URLS_CN;
-import static com.adjust.sdk.Constants.FALLBACK_GDPR_URLS_IN;
-import static com.adjust.sdk.Constants.FALLBACK_SUBSCRIPTION_URLS_CN;
-import static com.adjust.sdk.Constants.FALLBACK_SUBSCRIPTION_URLS_IN;
-import static com.adjust.sdk.Constants.GDPR_URL_CN;
-import static com.adjust.sdk.Constants.GDPR_URL_IN;
-import static com.adjust.sdk.Constants.SUBSCRIPTION_URL_CN;
-import static com.adjust.sdk.Constants.SUBSCRIPTION_URL_IN;
 
 /**
  * Created by pfms on 06/11/14.
@@ -42,7 +28,7 @@ public class AdjustConfig {
     OnDeeplinkResponseListener onDeeplinkResponseListener;
     boolean sendInBackground;
     Double delayStart;
-    List<IRunActivityHandler> preLaunchActionsArray;
+    AdjustInstance.PreLaunchActions preLaunchActions;
     ILogger logger;
     String userAgent;
     String pushToken;
@@ -52,31 +38,23 @@ public class AdjustConfig {
     String appSecret;
     String externalDeviceId;
     boolean preinstallTrackingEnabled;
+    Boolean needsCost;
+    String urlStrategy;
+    String preinstallFilePath;
 
     public static final String ENVIRONMENT_SANDBOX = "sandbox";
     public static final String ENVIRONMENT_PRODUCTION = "production";
 
     public static final String URL_STRATEGY_INDIA = "url_strategy_india";
     public static final String URL_STRATEGY_CHINA = "url_strategy_china";
+    public static final String DATA_RESIDENCY_EU = "data_residency_eu";
+    public static final String DATA_RESIDENCY_TR = "data_residency_tr";
+    public static final String DATA_RESIDENCY_US = "data_residency_us";
 
+    public static final String AD_REVENUE_APPLOVIN_MAX = "applovin_max_sdk";
     public static final String AD_REVENUE_MOPUB = "mopub";
-    public static final String AD_REVENUE_ADMOB = "admob";
-    public static final String AD_REVENUE_FB_NATIVE_AD = "facebook_native_ad";
-    public static final String AD_REVENUE_IRONSOURCE = "ironsource";
-    public static final String AD_REVENUE_FYBER = "fyber";
-    public static final String AD_REVENUE_AERSERV = "aerserv";
-    public static final String AD_REVENUE_APPODEAL = "appodeal";
-    public static final String AD_REVENUE_ADINCUBE = "adincube";
-    public static final String AD_REVENUE_FUSE_POWERED = "fusepowered";
-    public static final String AD_REVENUE_ADDAPTR = "addapptr";
-    public static final String AD_REVENUE_MILLENNIAL_MEDITATION = "millennial_mediation";
-    public static final String AD_REVENUE_FLURRY = "flurry";
-    public static final String AD_REVENUE_ADMOST = "admost";
-    public static final String AD_REVENUE_DELTADNA = "deltadna";
-    public static final String AD_REVENUE_UPSIGHT = "upsight";
-    public static final String AD_REVENUE_UNITYADS = "unityads";
-    public static final String AD_REVENUE_ADTOAPP = "adtoapp";
-    public static final String AD_REVENUE_TAPDAQ = "tapdaq";
+    public static final String AD_REVENUE_ADMOB = "admob_sdk";
+    public static final String AD_REVENUE_IRONSOURCE = "ironsource_sdk";
 
     public AdjustConfig(Context context, String appToken, String environment) {
         init(context, appToken, environment, false);
@@ -195,6 +173,14 @@ public class AdjustConfig {
         this.preinstallTrackingEnabled = preinstallTrackingEnabled;
     }
 
+    public void setPreinstallFilePath(String preinstallFilePath) {
+        this.preinstallFilePath = preinstallFilePath;
+    }
+
+    public void setNeedsCost(boolean needsCost) {
+        this.needsCost = needsCost;
+    }
+
     public boolean isValid() {
         if (!checkAppToken(appToken)) return false;
         if (!checkEnvironment(environment)) return false;
@@ -208,29 +194,13 @@ public class AdjustConfig {
             logger.error("Invalid url strategy");
             return;
         }
-
-        switch (urlStrategy) {
-            case URL_STRATEGY_INDIA:
-                AdjustFactory.setBaseUrl(BASE_URL_IN);
-                AdjustFactory.setGdprUrl(GDPR_URL_IN);
-                AdjustFactory.setSubscriptionUrl(SUBSCRIPTION_URL_IN);
-                AdjustFactory.setFallbackBaseUrls(Arrays.asList(FALLBACK_BASE_URLS_IN));
-                AdjustFactory.setFallbackGdprUrls(Arrays.asList(FALLBACK_GDPR_URLS_IN));
-                AdjustFactory.setFallbackSubscriptionUrls(Arrays.asList(FALLBACK_SUBSCRIPTION_URLS_IN));
-                break;
-
-            case URL_STRATEGY_CHINA:
-                AdjustFactory.setBaseUrl(BASE_URL_CN);
-                AdjustFactory.setGdprUrl(GDPR_URL_CN);
-                AdjustFactory.setSubscriptionUrl(SUBSCRIPTION_URL_CN);
-                AdjustFactory.setFallbackBaseUrls(Arrays.asList(FALLBACK_BASE_URLS_CN));
-                AdjustFactory.setFallbackGdprUrls(Arrays.asList(FALLBACK_GDPR_URLS_CN));
-                AdjustFactory.setFallbackSubscriptionUrls(Arrays.asList(FALLBACK_SUBSCRIPTION_URLS_CN));
-                break;
-
-            default:
-                logger.warn("Unrecognised url strategy %s", urlStrategy);
+        if (!urlStrategy.equals(URL_STRATEGY_INDIA)
+                && !urlStrategy.equals(URL_STRATEGY_CHINA)
+                && !urlStrategy.equals(DATA_RESIDENCY_EU))
+        {
+            logger.warn("Unrecognised url strategy %s", urlStrategy);
         }
+        this.urlStrategy = urlStrategy;
     }
 
     private void setLogLevel(LogLevel logLevel, String environment) {

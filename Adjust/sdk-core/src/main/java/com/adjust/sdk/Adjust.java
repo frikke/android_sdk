@@ -32,7 +32,7 @@ public class Adjust {
      */
     public static synchronized AdjustInstance getDefaultInstance() {
         @SuppressWarnings("unused")
-        String VERSION = "!SDK-VERSION-STRING!:com.adjust.sdk:adjust-android:4.24.1";
+        String VERSION = "!SDK-VERSION-STRING!:com.adjust.sdk:adjust-android:4.28.3";
 
         if (defaultInstance == null) {
             defaultInstance = new AdjustInstance();
@@ -249,6 +249,18 @@ public class Adjust {
         adjustInstance.disableThirdPartySharing(context);
     }
 
+    public static void trackThirdPartySharing(
+            final AdjustThirdPartySharing adjustThirdPartySharing)
+    {
+        AdjustInstance adjustInstance = Adjust.getDefaultInstance();
+        adjustInstance.trackThirdPartySharing(adjustThirdPartySharing);
+    }
+
+    public static void trackMeasurementConsent(final boolean consentMeasurement) {
+        AdjustInstance adjustInstance = Adjust.getDefaultInstance();
+        adjustInstance.trackMeasurementConsent(consentMeasurement);
+    }
+
     /**
      * Track ad revenue from a source provider
      *
@@ -258,6 +270,16 @@ public class Adjust {
     public static void trackAdRevenue(final String source, final JSONObject payload) {
         AdjustInstance adjustInstance = Adjust.getDefaultInstance();
         adjustInstance.trackAdRevenue(source, payload);
+    }
+
+    /**
+     * Track ad revenue from a source provider
+     *
+     * @param adjustAdRevenue Adjust ad revenue information like source, revenue, currency etc
+     */
+    public static void trackAdRevenue(final AdjustAdRevenue adjustAdRevenue) {
+        AdjustInstance adjustInstance = Adjust.getDefaultInstance();
+        adjustInstance.trackAdRevenue(adjustAdRevenue);
     }
 
     /**
