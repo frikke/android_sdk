@@ -296,7 +296,7 @@ public class AdjustConfig {
         return logger;
     }
 
-    public boolean isAppSetIdReadingDisabled() {
+    public boolean isAppSetIdReadingEnabled() {
         return appSetIdReadingDisabled;
     }
 
