@@ -87,7 +87,7 @@ public class AdjustConfig {
         this.coppaComplianceEnabled = false;
         this.playStoreKidsComplianceEnabled = false;
         this.isFirstSessionDelayEnabled = false;
-        this.appSetIdReadingDisabled = false;
+        this.isAppSetIdReadingEnabled = true;
     }
 
     public void setLogLevel(LogLevel logLevel) {
