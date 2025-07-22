@@ -48,7 +48,7 @@ public class AdjustConfig {
     ArrayList<OnAttributionReadListener> cachedAttributionReadCallbacks = new ArrayList<>();
     boolean isFirstSessionDelayEnabled;
     AdjustStoreInfo storeInfo;
-    boolean appSetIdReadingDisabled;
+    boolean isAppSetIdReadingEnabled;
 
     public static final String ENVIRONMENT_SANDBOX = "sandbox";
     public static final String ENVIRONMENT_PRODUCTION = "production";
