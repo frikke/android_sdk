@@ -297,7 +297,7 @@ public class AdjustConfig {
     }
 
     public boolean isAppSetIdReadingEnabled() {
-        return appSetIdReadingDisabled;
+        return isAppSetIdReadingEnabled;
     }
 
     private boolean checkContext(Context context) {
