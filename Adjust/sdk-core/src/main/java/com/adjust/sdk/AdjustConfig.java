@@ -48,6 +48,7 @@ public class AdjustConfig {
     ArrayList<OnAttributionReadListener> cachedAttributionReadCallbacks = new ArrayList<>();
     boolean isFirstSessionDelayEnabled;
     AdjustStoreInfo storeInfo;
+    boolean appSetIdReadingDisabled;
 
     public static final String ENVIRONMENT_SANDBOX = "sandbox";
     public static final String ENVIRONMENT_PRODUCTION = "production";
@@ -86,6 +87,7 @@ public class AdjustConfig {
         this.coppaComplianceEnabled = false;
         this.playStoreKidsComplianceEnabled = false;
         this.isFirstSessionDelayEnabled = false;
+        this.appSetIdReadingDisabled = false;
     }
 
     public void setLogLevel(LogLevel logLevel) {
@@ -190,6 +192,10 @@ public class AdjustConfig {
         this.onDeferredDeeplinkResponseListener = onDeferredDeeplinkResponseListener;
     }
 
+    public void disableAppSetIdReading() {
+        this.appSetIdReadingDisabled = true;
+    }
+
     public Context getContext() {
         return context;
     }
@@ -288,6 +294,10 @@ public class AdjustConfig {
 
     public ILogger getLogger() {
         return logger;
+    }
+
+    public boolean isAppSetIdReadingDisabled() {
+        return appSetIdReadingDisabled;
     }
 
     private boolean checkContext(Context context) {

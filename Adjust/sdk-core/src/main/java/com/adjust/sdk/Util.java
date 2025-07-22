@@ -685,6 +685,13 @@ public class Util {
         return !adjustConfig.coppaComplianceEnabled && !adjustConfig.playStoreKidsComplianceEnabled;
     }
 
+    public static boolean canReadAppSetId(final AdjustConfig adjustConfig) {
+        if (adjustConfig.isAppSetIdReadingDisabled()) {
+            return false;
+        }
+        return canReadPlayIds(adjustConfig);
+    }
+
     public static boolean isGooglePlayGamesForPC(final Context context) {
         PackageManager pm = context.getPackageManager();
         return pm.hasSystemFeature("com.google.android.play.feature.HPE_EXPERIENCE");
