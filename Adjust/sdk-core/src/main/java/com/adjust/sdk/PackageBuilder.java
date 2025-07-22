@@ -1260,6 +1260,10 @@ public class PackageBuilder {
         if (firstSessionDelayManager.wasSet()) {
             PackageBuilder.addBoolean(parameters, "ff_first_session_delay", true);
         }
+
+        if (!adjustConfig.isAppSetIdReadingEnabled) {
+            PackageBuilder.addBoolean(parameters, "ff_app_set_id_disabled", true);
+        }
     }
 
     private void injectStoreInfoToParameters(Map<String, String> parameters) {
