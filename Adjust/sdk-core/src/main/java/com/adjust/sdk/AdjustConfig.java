@@ -193,7 +193,7 @@ public class AdjustConfig {
     }
 
     public void disableAppSetIdReading() {
-        this.appSetIdReadingDisabled = true;
+        this.isAppSetIdReadingEnabled = false;
     }
 
     public Context getContext() {
