@@ -488,6 +488,14 @@ public class AdjustCommandExecutor {
                 adjustConfig.enableFirstSessionDelay();
             }
         }
+
+        if (command.containsParameter("appSetIdReadingEnabled")) {
+            String appSetIdReadingEnabledS = command.getFirstParameterValue("appSetIdReadingEnabled");
+            boolean appSetIdReadingDisabled = "false".equals(appSetIdReadingEnabledS);
+            if (appSetIdReadingDisabled) {
+                adjustConfig.disableAppSetIdReading();
+            }
+        }
     }
 
     private void start() {
