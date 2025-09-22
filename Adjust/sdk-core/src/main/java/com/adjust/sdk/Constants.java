@@ -58,6 +58,7 @@ public interface Constants {
     String ATTRIBUTION_FILENAME = "AdjustAttribution";
     String GLOBAL_CALLBACK_PARAMETERS_FILENAME = "AdjustGlobalCallbackParameters";
     String GLOBAL_PARTNER_PARAMETERS_FILENAME = "AdjustGlobalPartnerParameters";
+    String EVENT_METADATA_FILENAME = "AdjustEventMetadata";
 
     String MALFORMED = "malformed";
     String SMALL = "small";

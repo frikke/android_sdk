@@ -92,8 +92,8 @@ public class PackageBuilder {
         return sessionPackage;
     }
 
-    ActivityPackage buildEventPackage(AdjustEvent event) {
-        Map<String, String> parameters = getEventParameters(event);
+    ActivityPackage buildEventPackage(AdjustEvent event, int sequence) {
+        Map<String, String> parameters = getEventParameters(event, sequence);
         ActivityPackage eventPackage = getDefaultActivityPackage(ActivityKind.EVENT);
         eventPackage.setPath("/event");
         eventPackage.setSuffix(getEventSuffix(event));
@@ -316,7 +316,7 @@ public class PackageBuilder {
         return parameters;
     }
 
-    public Map<String, String> getEventParameters(AdjustEvent event) {
+    public Map<String, String> getEventParameters(AdjustEvent event, int sequence) {
         Map<String, String> parameters = new HashMap<String, String>();
 
         deviceInfo.reloadOtherDeviceInfoParams(adjustConfig, logger);
@@ -398,6 +398,7 @@ public class PackageBuilder {
         PackageBuilder.addDuration(parameters, "session_length", activityStateCopy.sessionLength);
         PackageBuilder.addLong(parameters, "subsession_count", activityStateCopy.subsessionCount);
         PackageBuilder.addDuration(parameters, "time_spent", activityStateCopy.timeSpent);
+        PackageBuilder.addInteger(parameters, "seq", sequence);
 
         // google play games
         PackageBuilder.addBoolean(parameters, "gpg_pc_enabled", deviceInfo.isGooglePlayGamesForPC ? true : null);
