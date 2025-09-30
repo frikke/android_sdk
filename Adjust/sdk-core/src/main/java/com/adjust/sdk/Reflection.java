@@ -1,7 +1,6 @@
 package com.adjust.sdk;
 
 import android.content.Context;
-import android.util.Log;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
