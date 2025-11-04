@@ -1,10 +1,61 @@
 package com.adjust.sdk;
 
+
+import android.content.Context;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+
 import java.util.HashMap;
 import java.util.Map;
 
 public class EventMetadata {
-    Map<String, Integer> eventSequence;
+    private static final String EVENT_METADATA_FILENAME = "AdjustEventMetadata";
+    private static final String EVENT_METADATA_NAME = "Event metadata";
+
+    private @NonNull Map<String, Integer> eventSequence;
+    private @NonNull final  ILogger logger;
+    private @Nullable Context context;
+
+    public EventMetadata() {
+        eventSequence = new HashMap<>();
+        logger = AdjustFactory.getLogger();
+    }
+
+    @SuppressWarnings("unchecked")
+    public void readState(Context context) {
+        this.context = context;
+        try {
+            Map<String, Integer> readEventSequence = Util.readObject(context,
+              EVENT_METADATA_FILENAME,
+              EVENT_METADATA_NAME,
+              (Class<Map<String,Integer>>)(Class)Map.class);
+            if (readEventSequence != null) {
+                eventSequence = readEventSequence;
+            } else {
+                logger.error("Read null event metadata file");
+            }
+        } catch (Exception e) {
+            logger.error("Failed to read event metadata file (%s)", e.getMessage());
+        }
+    }
+
+    public int incrementSequenceForEvent(String eventToken) {
+        @Nullable final Integer oldSequence = eventSequence.get(eventToken);
+        final int newSequence = incrementOrStartAt1(oldSequence);
+
+        eventSequence.put(eventToken, newSequence);
+        writeEventMetadata();
+
+        return newSequence;
+    }
+
+    private int incrementOrStartAt1(@Nullable final Integer oldValue) {
+        if (oldValue == null) {
+            return 1;
+        }
+        return oldValue + 1;
+    }
 
     @Override
     public boolean equals(Object other) {
@@ -25,11 +76,15 @@ public class EventMetadata {
         return hashCode;
     }
 
-    public EventMetadata deepCopy() {
-        EventMetadata newEventMetadata = new EventMetadata();
-        if (this.eventSequence != null) {
-            newEventMetadata.eventSequence = new HashMap<String, Integer>(this.eventSequence);
+    private void writeEventMetadata() {
+        if (context == null) {
+            logger.error("Could not write event metadata before having context from reading");
+            return;
         }
-        return newEventMetadata;
+        Util.writeObject(eventSequence, context, EVENT_METADATA_FILENAME, EVENT_METADATA_NAME);
+    }
+
+    public static boolean deleteState(Context context) {
+        return context.deleteFile(EVENT_METADATA_FILENAME);
     }
 }

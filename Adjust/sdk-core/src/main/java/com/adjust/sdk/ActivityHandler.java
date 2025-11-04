@@ -13,7 +13,6 @@ import static com.adjust.sdk.Constants.ACTIVITY_STATE_FILENAME;
 import static com.adjust.sdk.Constants.ATTRIBUTION_FILENAME;
 import static com.adjust.sdk.Constants.CONNECTION_TIMEOUT;
 import static com.adjust.sdk.Constants.CONNECTION_TIMEOUT_VERIFY;
-import static com.adjust.sdk.Constants.EVENT_METADATA_FILENAME;
 import static com.adjust.sdk.Constants.GLOBAL_CALLBACK_PARAMETERS_FILENAME;
 import static com.adjust.sdk.Constants.GLOBAL_PARTNER_PARAMETERS_FILENAME;
 import static com.adjust.sdk.Constants.REFERRER_API_HUAWEI_ADS;
@@ -69,7 +68,6 @@ public class ActivityHandler
     private static final String GLOBAL_CALLBACK_PARAMETERS_NAME = "Global Callback parameters";
     private static final String GLOBAL_PARTNER_PARAMETERS_NAME = "Global Partner parameters";
     private static final String GLOBAL_PARAMETERS_NAME = "Global parameters";
-    private static final String EVENT_METADATA_NAME = "Event metadata";
 
     ThreadExecutor executor;
     private IPackageHandler packageHandler;
@@ -97,7 +95,7 @@ public class ActivityHandler
     private List<AdjustThirdPartySharing> cachedAdjustThirdPartySharingArray;
     private Boolean cachedLastMeasurementConsentTrack;
     private FirstSessionDelayManager firstSessionDelayManager;
-    private EventMetadata eventMetadata;
+    private @NonNull final EventMetadata eventMetadata = new EventMetadata();
 
     @Override
     public void teardown() {
@@ -154,7 +152,7 @@ public class ActivityHandler
         deleteAttribution(context);
         deleteGlobalCallbackParameters(context);
         deleteGlobalPartnerParameters(context);
-        deleteEventMetadata(context);
+        EventMetadata.deleteState(context);
 
         SharedPreferencesManager.getDefaultInstance(context).clear();
     }
@@ -842,8 +840,7 @@ public class ActivityHandler
         readGlobalCallbackParametersI(adjustConfig.context);
         readGlobalPartnerParametersI(adjustConfig.context);
 
-        eventMetadata = new EventMetadata();
-        readEventMetadataI(adjustConfig.context);
+        eventMetadata.readState(adjustConfig.context);
 
         if (activityState != null) {
             activityState.setEventDeduplicationIdsMaxSize(adjustConfig.getEventDeduplicationIdsMaxSize());
@@ -1563,7 +1560,7 @@ public class ActivityHandler
 
         long now = System.currentTimeMillis();
 
-        int sequence = updateEventMetadataI(event);
+        int sequence = eventMetadata.incrementSequenceForEvent(event.eventToken);
 
         activityState.eventCount++;
         updateActivityStateI(now);
@@ -1582,26 +1579,6 @@ public class ActivityHandler
         }
 
         writeActivityStateI();
-        writeEventMetadataI();
-    }
-
-    private int updateEventMetadataI(AdjustEvent event) {
-        if (eventMetadata == null) {
-            eventMetadata = new EventMetadata();
-        }
-
-        if (eventMetadata.eventSequence == null) {
-            eventMetadata.eventSequence = new LinkedHashMap<String, Integer>();
-        }
-
-        Integer oldValue = eventMetadata.eventSequence.get(event.eventToken);
-        int newValue = 1;
-        if (oldValue != null) {
-            newValue = oldValue + 1;
-        }
-
-        eventMetadata.eventSequence.put(event.eventToken, newValue);
-        return newValue;
     }
 
     private void launchEventResponseTasksI(final EventResponseData eventResponseData) {
@@ -2269,10 +2246,6 @@ public class ActivityHandler
         return context.deleteFile(GLOBAL_PARTNER_PARAMETERS_FILENAME);
     }
 
-    public static boolean deleteEventMetadata(Context context) {
-        return context.deleteFile(EVENT_METADATA_FILENAME);
-    }
-
     private void transferSessionPackageI(long now) {
         PackageBuilder builder = new PackageBuilder(
           adjustConfig, deviceInfo, activityState, globalParameters, firstSessionDelayManager, now);
@@ -2797,19 +2770,6 @@ public class ActivityHandler
         }
     }
 
-    @SuppressWarnings("unchecked")
-    private void readEventMetadataI(Context context) {
-        try {
-            eventMetadata.eventSequence = Util.readObject(context,
-                    EVENT_METADATA_FILENAME,
-                    EVENT_METADATA_NAME,
-                    (Class<Map<String,Integer>>)(Class)Map.class);
-        } catch (Exception e) {
-            logger.error("Failed to read %s file (%s)", EVENT_METADATA_NAME, e.getMessage());
-            eventMetadata.eventSequence = null;
-        }
-    }
-
     private void writeActivityStateI() {
         synchronized (ActivityState.class) {
             if (activityState == null) {
@@ -2864,14 +2824,6 @@ public class ActivityHandler
         }
     }
 
-    private void writeEventMetadataI() {
-        synchronized (EventMetadata.class) {
-            if (eventMetadata == null) {
-                return;
-            }
-            Util.writeObject(eventMetadata.eventSequence, adjustConfig.context, EVENT_METADATA_FILENAME, EVENT_METADATA_NAME);
-        }
-    }
 
     private void teardownAllGlobalParametersS() {
         synchronized (GlobalParameters.class) {
