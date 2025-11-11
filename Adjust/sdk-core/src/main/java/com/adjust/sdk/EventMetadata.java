@@ -42,19 +42,14 @@ public class EventMetadata {
 
     public int incrementSequenceForEvent(String eventToken) {
         @Nullable final Integer oldSequence = eventSequence.get(eventToken);
-        final int newSequence = incrementOrStartAt1(oldSequence);
+
+        // Sequence start at 1 when it does not exist
+        final int newSequence = (oldSequence != null ? oldSequence : 0) + 1;
 
         eventSequence.put(eventToken, newSequence);
         writeEventMetadata();
 
         return newSequence;
-    }
-
-    private int incrementOrStartAt1(@Nullable final Integer oldValue) {
-        if (oldValue == null) {
-            return 1;
-        }
-        return oldValue + 1;
     }
 
     @Override
