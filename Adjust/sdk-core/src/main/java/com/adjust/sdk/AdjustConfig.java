@@ -44,8 +44,10 @@ public class AdjustConfig {
     boolean isDeviceIdsReadingOnceEnabled;
     OnDeeplinkResolvedListener cachedDeeplinkResolutionCallback;
     ArrayList<OnAdidReadListener> cachedAdidReadCallbacks = new ArrayList<>();
+    ArrayList<AdjustTimeoutCallback> cachedAdidReadTimeoutCallbacks = new ArrayList<>();
     Integer eventDeduplicationIdsMaxSize;
     ArrayList<OnAttributionReadListener> cachedAttributionReadCallbacks = new ArrayList<>();
+    ArrayList<AdjustTimeoutCallback> cachedAttributionReadTimeoutCallbacks = new ArrayList<>();
     boolean isFirstSessionDelayEnabled;
     AdjustStoreInfo storeInfo;
     boolean isAppSetIdReadingEnabled;
