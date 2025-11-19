@@ -231,6 +231,18 @@ var Adjust = {
         }
     },
 
+    getAdidWithTimeout: function (timeoutInMilliSec, callback) {
+     if (AdjustBridge) {
+            if (typeof callback === 'string' || callback instanceof String) {
+                this.getAdIdCallbackName = callback;
+            } else {
+                this.getAdIdCallbackName = 'Adjust.adjust_getAdIdCallback';
+                this.getAdIdCallbackFunction = callback;
+            }
+            AdjustBridge.getAdidWithTimeout(timeoutInMilliSec, this.getAdIdCallbackName);
+        }
+    },
+
     adjust_getAdIdCallback: function (adId) {
         if (AdjustBridge && this.getAdIdCallbackFunction) {
             this.getAdIdCallbackFunction(adId);
@@ -264,6 +276,18 @@ var Adjust = {
                 this.getAttributionCallbackFunction = callback;
             }
             AdjustBridge.getAttribution(this.getAttributionCallbackName);
+        }
+    },
+
+    getAttributionWithTimeout: function (timeoutInMilliSec, callback) {
+     if (AdjustBridge) {
+            if (typeof callback === 'string' || callback instanceof String) {
+                this.getAttributionCallbackName = callback;
+            } else {
+                this.getAttributionCallbackName = 'Adjust.adjust_getAttributionCallback';
+                this.getAttributionCallbackFunction = callback;
+            }
+            AdjustBridge.getAttributionWithTimeout(timeoutInMilliSec, this.getAttributionCallbackName);
         }
     },
 
