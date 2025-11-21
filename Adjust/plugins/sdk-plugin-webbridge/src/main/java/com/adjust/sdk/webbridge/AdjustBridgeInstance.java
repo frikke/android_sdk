@@ -773,7 +773,7 @@ public class AdjustBridgeInstance {
         Adjust.getAdidWithTimeout(timeoutInMilliSec, new OnAdidReadListener() {
             @Override
             public void onAdidRead(String adid) {
-                AdjustBridgeUtil.execSingleValueCallback(webView, callback, adid);
+                AdjustBridgeUtil.execAdidCallbackCommand(webView, callback, adid);
             }
         }, application.getApplicationContext());
     }

@@ -116,35 +116,54 @@ public class AdjustBridgeUtil {
         }
     }
 
-
-    public static void execAttributionCallbackCommand(final WebView webView, final String commandName, final AdjustAttribution attribution) {
+    public static void execAdidCallbackCommand(final WebView webView, final String commandName, final String adid) {
         if (webView == null) {
-            return;
-        }
-        if (attribution == null) {
             return;
         }
 
         webView.post(new Runnable() {
             @Override
             public void run() {
-                JSONObject jsonAttribution = new JSONObject();
-                try {
-                    jsonAttribution.put("trackerName", attribution.trackerName == null ? JSONObject.NULL : attribution.trackerName);
-                    jsonAttribution.put("trackerToken", attribution.trackerToken == null ? JSONObject.NULL : attribution.trackerToken);
-                    jsonAttribution.put("campaign", attribution.campaign == null ? JSONObject.NULL : attribution.campaign);
-                    jsonAttribution.put("network", attribution.network == null ? JSONObject.NULL : attribution.network);
-                    jsonAttribution.put("creative", attribution.creative == null ? JSONObject.NULL : attribution.creative);
-                    jsonAttribution.put("adgroup", attribution.adgroup == null ? JSONObject.NULL : attribution.adgroup);
-                    jsonAttribution.put("clickLabel", attribution.clickLabel == null ? JSONObject.NULL : attribution.clickLabel);
-                    jsonAttribution.put("costType", attribution.costType == null ? JSONObject.NULL : attribution.costType);
-                    jsonAttribution.put("costAmount", attribution.costAmount == null || attribution.costAmount.isNaN() ? 0 : attribution.costAmount);
-                    jsonAttribution.put("costCurrency", attribution.costCurrency == null ? JSONObject.NULL : attribution.costCurrency);
-                    jsonAttribution.put("fbInstallReferrer", attribution.fbInstallReferrer == null ? JSONObject.NULL : attribution.fbInstallReferrer);
-                    jsonAttribution.put("jsonResponse", attribution.jsonResponse == null ? JSONObject.NULL : new JSONObject(attribution.jsonResponse));
-
-                    String command = "javascript:" + commandName + "(" + jsonAttribution.toString() + ");";
+                if (adid != null ) {
+                    String command = "javascript:" + commandName + "('" + adid + "');";
                     webView.loadUrl(command);
+                } else {
+                    String command = "javascript:" + commandName + "(null);";
+                    webView.loadUrl(command);
+                }
+            }
+        });
+    }
+
+    public static void execAttributionCallbackCommand(final WebView webView, final String commandName, final AdjustAttribution attribution) {
+        if (webView == null) {
+            return;
+        }
+        webView.post(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    if (attribution != null) {
+                        JSONObject jsonAttribution = new JSONObject();
+                        jsonAttribution.put("trackerName", attribution.trackerName == null ? JSONObject.NULL : attribution.trackerName);
+                        jsonAttribution.put("trackerToken", attribution.trackerToken == null ? JSONObject.NULL : attribution.trackerToken);
+                        jsonAttribution.put("campaign", attribution.campaign == null ? JSONObject.NULL : attribution.campaign);
+                        jsonAttribution.put("network", attribution.network == null ? JSONObject.NULL : attribution.network);
+                        jsonAttribution.put("creative", attribution.creative == null ? JSONObject.NULL : attribution.creative);
+                        jsonAttribution.put("adgroup", attribution.adgroup == null ? JSONObject.NULL : attribution.adgroup);
+                        jsonAttribution.put("clickLabel", attribution.clickLabel == null ? JSONObject.NULL : attribution.clickLabel);
+                        jsonAttribution.put("costType", attribution.costType == null ? JSONObject.NULL : attribution.costType);
+                        jsonAttribution.put("costAmount", attribution.costAmount == null || attribution.costAmount.isNaN() ? 0 : attribution.costAmount);
+                        jsonAttribution.put("costCurrency", attribution.costCurrency == null ? JSONObject.NULL : attribution.costCurrency);
+                        jsonAttribution.put("fbInstallReferrer", attribution.fbInstallReferrer == null ? JSONObject.NULL : attribution.fbInstallReferrer);
+                        jsonAttribution.put("jsonResponse", attribution.jsonResponse == null ? JSONObject.NULL : new JSONObject(attribution.jsonResponse));
+
+                        String command = "javascript:" + commandName + "(" + jsonAttribution.toString() + ");";
+                        webView.loadUrl(command);
+                    } else {
+                        String command = "javascript:" + commandName + "(null);";
+                        webView.loadUrl(command);
+                    }
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
