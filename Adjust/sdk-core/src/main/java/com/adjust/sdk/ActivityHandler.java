@@ -868,39 +868,8 @@ public class ActivityHandler
             }
 
             // adid not found in activity state
-            // store timeout callback for later processing
-            AdjustTimeoutCallback timeoutCallback = new AdjustTimeoutCallback(callback);
-
-            // set up timeout timer immediately
-            TimerOnce timerOnce = new TimerOnce(new Runnable() {
-                @Override
-                public void run() {
-                    if (timeoutCallback.getOnAdidReadListener() != null) {
-                        // remove callback from array and call callback with null
-                        synchronized (cachedAdidReadTimeoutCallbacks) {
-                            cachedAdidReadTimeoutCallbacks.remove(timeoutCallback);
-                        }
-                        new Handler(getContext().getMainLooper()).post(new Runnable() {
-                            @Override
-                            public void run() {
-                                // if timer elapses, return null (only if callback still exists)
-                                if (timeoutCallback.getOnAdidReadListener() != null) {
-                                    timeoutCallback.getOnAdidReadListener().onAdidRead(null);
-                                }
-
-                                // null callback to call it only once
-                                timeoutCallback.setOnAdidReadListener(null);
-                            }
-                        });
-                    }
-                }
-            }, ADID_TIMEOUT_TIMER_NAME);
-
-            timeoutCallback.setTimer(timerOnce);
-            synchronized (cachedAdidReadTimeoutCallbacks) {
-                cachedAdidReadTimeoutCallbacks.add(timeoutCallback);
-            }
-            timerOnce.startIn(timeoutInMilliSec);
+            // queue timeout callback for later processing
+            queueGetAdidWithTimeout(timeoutInMilliSec, callback, cachedAdidReadTimeoutCallbacks, getContext());
         }
     }
 
@@ -931,39 +900,8 @@ public class ActivityHandler
             });
         } else {
             // attribution not found
-            // store timeout callback for later processing
-            AdjustTimeoutCallback timeoutCallback = new AdjustTimeoutCallback(onAttributionReadListener);
-
-            // set up timeout timer immediately
-            TimerOnce timerOnce = new TimerOnce(new Runnable() {
-                @Override
-                public void run() {
-                    if (timeoutCallback.getOnAttributionReadListener() != null) {
-                        // remove callback from array and call callback with null
-                        synchronized (cachedAttributionReadTimeoutCallbacks) {
-                            cachedAttributionReadTimeoutCallbacks.remove(timeoutCallback);
-                        }
-                        new Handler(getContext().getMainLooper()).post(new Runnable() {
-                            @Override
-                            public void run() {
-                                // if timer elapses, return null (only if callback still exists)
-                                if (timeoutCallback.getOnAttributionReadListener() != null) {
-                                    timeoutCallback.getOnAttributionReadListener().onAttributionRead(null);
-                                }
-
-                                // null callback to call it only once
-                                timeoutCallback.setOnAttributionReadListener(null);
-                            }
-                        });
-                    }
-                }
-            }, ATTRIBUTION_TIMEOUT_TIMER_NAME);
-
-            timeoutCallback.setTimer(timerOnce);
-            synchronized (cachedAttributionReadTimeoutCallbacks) {
-                cachedAttributionReadTimeoutCallbacks.add(timeoutCallback);
-            }
-            timerOnce.startIn(timeoutInMilliSec);
+            // queue timeout callback for later processing
+            queueGetAttributionWithTimeout(timeoutInMilliSec, onAttributionReadListener, cachedAttributionReadTimeoutCallbacks, getContext());
         }
     }
 
@@ -1006,6 +944,88 @@ public class ActivityHandler
     @Override
     public InternalState getInternalState() {
         return internalState;
+    }
+
+    public static void queueGetAdidWithTimeout(final long timeoutInMilliSec,
+                                               final OnAdidReadListener onAdidReadListener,
+                                               final ArrayList<AdjustTimeoutCallback> cachedAdidReadTimeoutCallbacks,
+                                               final Context context) {
+        AdjustTimeoutCallback timeoutCallback = new AdjustTimeoutCallback(onAdidReadListener);
+
+        // cache the callback before starting the timer
+        synchronized (cachedAdidReadTimeoutCallbacks) {
+            cachedAdidReadTimeoutCallbacks.add(timeoutCallback);
+        }
+
+        // set up timeout timer immediately
+        TimerOnce timerOnce = new TimerOnce(new Runnable() {
+            @Override
+            public void run() {
+                if (timeoutCallback.getOnAdidReadListener() != null) {
+                    // remove callback from array and call callback with null
+                    synchronized (cachedAdidReadTimeoutCallbacks) {
+                        cachedAdidReadTimeoutCallbacks.remove(timeoutCallback);
+                    }
+                    new Handler(context.getMainLooper()).post(new Runnable() {
+                        @Override
+                        public void run() {
+                            // if timer elapses, return null (only if callback still exists)
+                            OnAdidReadListener onAdidReadListener = timeoutCallback.getOnAdidReadListener();
+                            if (onAdidReadListener != null) {
+                                onAdidReadListener.onAdidRead(null);
+                            }
+
+                            // null callback to call it only once
+                            timeoutCallback.setOnAdidReadListener(null);
+                        }
+                    });
+                }
+            }
+        }, ADID_TIMEOUT_TIMER_NAME);
+
+        timeoutCallback.setTimer(timerOnce);
+        timerOnce.startIn(timeoutInMilliSec);
+    }
+
+    public static void queueGetAttributionWithTimeout(final long timeoutInMilliSec,
+                                                      final OnAttributionReadListener attributionReadListener,
+                                                      final ArrayList<AdjustTimeoutCallback> cachedAttributionReadTimeoutCallbacks,
+                                                      final Context context) {
+        AdjustTimeoutCallback timeoutCallback = new AdjustTimeoutCallback(attributionReadListener);
+
+        // cache the callback before starting the timer
+        synchronized (cachedAttributionReadTimeoutCallbacks) {
+            cachedAttributionReadTimeoutCallbacks.add(timeoutCallback);
+        }
+
+        // set up timeout timer immediately
+        TimerOnce timerOnce = new TimerOnce(new Runnable() {
+            @Override
+            public void run() {
+                if (timeoutCallback.getOnAttributionReadListener() != null) {
+                    // remove callback from array and call callback with null
+                    synchronized (cachedAttributionReadTimeoutCallbacks) {
+                        cachedAttributionReadTimeoutCallbacks.remove(timeoutCallback);
+                    }
+                    new Handler(context.getMainLooper()).post(new Runnable() {
+                        @Override
+                        public void run() {
+                            // if timer elapses, return null (only if callback still exists)
+                            OnAttributionReadListener onAttributionReadListener = timeoutCallback.getOnAttributionReadListener();
+                            if (onAttributionReadListener != null) {
+                                onAttributionReadListener.onAttributionRead(null);
+                            }
+
+                            // null callback to call it only once
+                            timeoutCallback.setOnAttributionReadListener(null);
+                        }
+                    });
+                }
+            }
+        }, ATTRIBUTION_TIMEOUT_TIMER_NAME);
+
+        timeoutCallback.setTimer(timerOnce);
+        timerOnce.startIn(timeoutInMilliSec);
     }
 
     void initI() {

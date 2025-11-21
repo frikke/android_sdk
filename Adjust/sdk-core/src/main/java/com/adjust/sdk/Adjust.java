@@ -362,7 +362,7 @@ public class Adjust {
         }
 
         AdjustInstance adjustInstance = Adjust.getDefaultInstance();
-        adjustInstance.getAdidWithTimeout(timeoutInMilliSec, onAdidReadListener, context);
+        adjustInstance.getAdidWithTimeout(timeoutInMilliSec, onAdidReadListener, extractApplicationContext(context));
     }
 
     /**
@@ -404,7 +404,7 @@ public class Adjust {
         }
 
         AdjustInstance adjustInstance = Adjust.getDefaultInstance();
-        adjustInstance.getAttributionWithTimeout(timeoutInMilliSec, attributionReadListener, context);
+        adjustInstance.getAttributionWithTimeout(timeoutInMilliSec, attributionReadListener, extractApplicationContext(context));
     }
 
     /**
