@@ -686,7 +686,7 @@ public class Util {
     }
 
     public static boolean canReadAppSetId(final AdjustConfig adjustConfig) {
-        if (!adjustConfig.isAppSetIdReadingEnabled()) {
+        if (!adjustConfig.isAppSetIdReadingEnabled) {
             return false;
         }
         return canReadPlayIds(adjustConfig);

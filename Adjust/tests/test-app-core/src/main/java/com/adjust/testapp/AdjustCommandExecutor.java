@@ -491,8 +491,8 @@ public class AdjustCommandExecutor {
 
         if (command.containsParameter("appSetIdReadingEnabled")) {
             String appSetIdReadingEnabledS = command.getFirstParameterValue("appSetIdReadingEnabled");
-            boolean appSetIdReadingDisabled = "false".equals(appSetIdReadingEnabledS);
-            if (appSetIdReadingDisabled) {
+            boolean appSetIdReadingEnabled = "true".equals(appSetIdReadingEnabledS);
+            if (!appSetIdReadingEnabled) {
                 adjustConfig.disableAppSetIdReading();
             }
         }
