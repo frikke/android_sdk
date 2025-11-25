@@ -139,7 +139,6 @@ AdjustCommandExecutor.prototype.executeCommand = function(command, idx) {
         case "attributionGetterWithTimeout"   : this.attributionGetterWithTimeout(command.params); break;
         case "adidGetter"                     : this.adidGetter(command.params); break;
         case "adidGetterWithTimeout"          : this.adidGetterWithTimeout(command.params); break;
-        case "sdkVersionGetter"               : this.sdkVersionGetter(command.params); break;
         case "endFirstSessionDelay"           : this.endFirstSessionDelay(command.params); break;
         case "coppaComplianceInDelay"         : this.coppaComplianceInDelay(command.params); break;
         case "playStoreKidsComplianceInDelay" : this.playStoreKidsComplianceInDelay(command.params); break;
@@ -787,14 +786,6 @@ AdjustCommandExecutor.prototype.adidGetterWithTimeout = function(params) {
                 TestLibrary.addInfoToSend("adid", "null");
             }
 
-            TestLibrary.sendInfoToServer(basePath);
-        });
-};
-
-AdjustCommandExecutor.prototype.sdkVersionGetter = function(params) {
-        var basePath = this.basePath;
-        Adjust.getSdkVersion(function(sdkVersion) {
-            TestLibrary.addInfoToSend("sdk_version", sdkVersion);
             TestLibrary.sendInfoToServer(basePath);
         });
 };

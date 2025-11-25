@@ -99,7 +99,6 @@ public class AdjustCommandExecutor {
                 case "attributionGetterWithTimeout" : attributionGetterWithTimeout(); break;
                 case "adidGetter" : adidGetter(); break;
                 case "adidGetterWithTimeout" : adidGetterWithTimeout(); break;
-                case "sdkVersionGetter" : sdkVersionGetter(); break;
                 case "getLastDeeplink" : getLastDeeplink(); break;
                 case "endFirstSessionDelay" : endFirstSessionDelay(); break;
                 case "coppaComplianceInDelay" : coppaComplianceInDelay(); break;
@@ -990,13 +989,6 @@ public class AdjustCommandExecutor {
             }
             MainActivity.testLibrary.sendInfoToServer(basePath);
         }, context);
-    }
-
-    private void sdkVersionGetter() {
-        Adjust.getSdkVersion(sdkVersion -> {
-            MainActivity.testLibrary.addInfoToSend("sdk_version", sdkVersion);
-            MainActivity.testLibrary.sendInfoToServer(basePath);
-        });
     }
 
     private void getLastDeeplink() {
