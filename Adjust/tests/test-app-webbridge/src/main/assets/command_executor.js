@@ -140,6 +140,9 @@ AdjustCommandExecutor.prototype.executeCommand = function(command, idx) {
         case "coppaComplianceInDelay"         : this.coppaComplianceInDelay(command.params); break;
         case "playStoreKidsComplianceInDelay" : this.playStoreKidsComplianceInDelay(command.params); break;
         case "externalDeviceIdInDelay"        : this.externalDeviceIdInDelay(command.params); break;
+        case "sdkVersionGetter"               : this.sdkVersionGetter(command.params); break;
+        case "googleAdIdGetter"               : this.googleAdIdGetter(command.params); break;
+        case "amazonAdIdGetter"               : this.amazonAdIdGetter(command.params); break;
         break;
     }
 
@@ -709,6 +712,30 @@ AdjustCommandExecutor.prototype.attributionGetter = function(params) {
 
             TestLibrary.sendInfoToServer(basePath);
         });
+};
+
+AdjustCommandExecutor.prototype.sdkVersionGetter = function(params) {
+    var basePath = this.basePath;
+    Adjust.getSdkVersion(function(sdkVersion) {
+        TestLibrary.addInfoToSend("sdk_version", sdkVersion);
+        TestLibrary.sendInfoToServer(basePath);
+    });
+};
+
+AdjustCommandExecutor.prototype.googleAdIdGetter = function(params) {
+    var basePath = this.basePath;
+    Adjust.getGoogleAdId(function(googleAdId) {
+        TestLibrary.addInfoToSend("gps_adid", googleAdId);
+        TestLibrary.sendInfoToServer(basePath);
+    });
+};
+
+AdjustCommandExecutor.prototype.amazonAdIdGetter = function(params) {
+    var basePath = this.basePath;
+    Adjust.getAmazonAdId(function(amazonAdId) {
+        TestLibrary.addInfoToSend("fire_adid", amazonAdId);
+        TestLibrary.sendInfoToServer(basePath);
+    });
 };
 
 //Util
