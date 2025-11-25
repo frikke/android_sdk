@@ -34,7 +34,6 @@ import com.adjust.sdk.OnEventTrackingFailedListener;
 import com.adjust.sdk.OnEventTrackingSucceededListener;
 import com.adjust.sdk.OnLastDeeplinkReadListener;
 import com.adjust.sdk.OnPurchaseVerificationFinishedListener;
-import com.adjust.sdk.OnSdkVersionReadListener;
 import com.adjust.sdk.OnSessionTrackingFailedListener;
 import com.adjust.sdk.OnSessionTrackingSucceededListener;
 import com.adjust.test_options.TestConnectionOptions;

@@ -695,23 +695,23 @@ AdjustCommandExecutor.prototype.sendReferrer = function(params) {
 };
 
 AdjustCommandExecutor.prototype.attributionGetter = function(params) {
-        var basePath = this.basePath;
-        Adjust.getAttribution(function(attribution) {
-            TestLibrary.addInfoToSend("tracker_token", attribution.trackerToken);
-            TestLibrary.addInfoToSend("tracker_name", attribution.trackerName);
-            TestLibrary.addInfoToSend("network", attribution.network);
-            TestLibrary.addInfoToSend("campaign", attribution.campaign);
-            TestLibrary.addInfoToSend("adgroup", attribution.adgroup);
-            TestLibrary.addInfoToSend("creative", attribution.creative);
-            TestLibrary.addInfoToSend("click_label", attribution.clickLabel);
-            TestLibrary.addInfoToSend("cost_type", attribution.costType);
-            TestLibrary.addInfoToSend("cost_amount", attribution.costAmount);
-            TestLibrary.addInfoToSend("cost_currency", attribution.costCurrency);
-            TestLibrary.addInfoToSend("fb_install_referrer", attribution.fbInstallReferrer);
-            TestLibrary.addInfoToSend("json_response", JSON.stringify(attribution.jsonResponse));
+    var basePath = this.basePath;
+    Adjust.getAttribution(function(attribution) {
+        TestLibrary.addInfoToSend("tracker_token", attribution.trackerToken);
+        TestLibrary.addInfoToSend("tracker_name", attribution.trackerName);
+        TestLibrary.addInfoToSend("network", attribution.network);
+        TestLibrary.addInfoToSend("campaign", attribution.campaign);
+        TestLibrary.addInfoToSend("adgroup", attribution.adgroup);
+        TestLibrary.addInfoToSend("creative", attribution.creative);
+        TestLibrary.addInfoToSend("click_label", attribution.clickLabel);
+        TestLibrary.addInfoToSend("cost_type", attribution.costType);
+        TestLibrary.addInfoToSend("cost_amount", attribution.costAmount);
+        TestLibrary.addInfoToSend("cost_currency", attribution.costCurrency);
+        TestLibrary.addInfoToSend("fb_install_referrer", attribution.fbInstallReferrer);
+        TestLibrary.addInfoToSend("json_response", JSON.stringify(attribution.jsonResponse));
 
-            TestLibrary.sendInfoToServer(basePath);
-        });
+        TestLibrary.sendInfoToServer(basePath);
+    });
 };
 
 AdjustCommandExecutor.prototype.sdkVersionGetter = function(params) {
