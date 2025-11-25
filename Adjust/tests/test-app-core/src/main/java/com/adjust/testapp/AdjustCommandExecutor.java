@@ -34,6 +34,7 @@ import com.adjust.sdk.OnEventTrackingFailedListener;
 import com.adjust.sdk.OnEventTrackingSucceededListener;
 import com.adjust.sdk.OnLastDeeplinkReadListener;
 import com.adjust.sdk.OnPurchaseVerificationFinishedListener;
+import com.adjust.sdk.OnSdkVersionReadListener;
 import com.adjust.sdk.OnSessionTrackingFailedListener;
 import com.adjust.sdk.OnSessionTrackingSucceededListener;
 import com.adjust.test_options.TestConnectionOptions;
@@ -100,6 +101,7 @@ public class AdjustCommandExecutor {
                 case "coppaComplianceInDelay" : coppaComplianceInDelay(); break;
                 case "playStoreKidsComplianceInDelay" : playStoreKidsComplianceInDelay(); break;
                 case "externalDeviceIdInDelay" : externalDeviceIdInDelay(); break;
+                case "sdkVersionGetter" : sdkVersionGetter(); break;
                 //case "testBegin": testBegin(); break;
                 // case "testEnd": testEnd(); break;
             }
@@ -964,6 +966,13 @@ public class AdjustCommandExecutor {
     private void externalDeviceIdInDelay() {
         String externalDeviceId = command.getFirstParameterValue("externalDeviceId");
         Adjust.setExternalDeviceIdInDelay(externalDeviceId);
+    }
+
+    private void sdkVersionGetter() {
+        Adjust.getSdkVersion(sdkVersion -> {
+            MainActivity.testLibrary.addInfoToSend("sdk_version", sdkVersion);
+            MainActivity.testLibrary.sendInfoToServer(basePath);
+        });
     }
 /*
     private void testBegin() {
