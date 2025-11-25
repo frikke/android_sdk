@@ -102,6 +102,8 @@ public class AdjustCommandExecutor {
                 case "playStoreKidsComplianceInDelay" : playStoreKidsComplianceInDelay(); break;
                 case "externalDeviceIdInDelay" : externalDeviceIdInDelay(); break;
                 case "sdkVersionGetter" : sdkVersionGetter(); break;
+                case "googleAdIdGetter" : googleAdIdGetter(); break;
+                case "amazonAdIdGetter" : amazonAdIdGetter(); break;
                 //case "testBegin": testBegin(); break;
                 // case "testEnd": testEnd(); break;
             }
@@ -971,6 +973,20 @@ public class AdjustCommandExecutor {
     private void sdkVersionGetter() {
         Adjust.getSdkVersion(sdkVersion -> {
             MainActivity.testLibrary.addInfoToSend("sdk_version", sdkVersion);
+            MainActivity.testLibrary.sendInfoToServer(basePath);
+        });
+    }
+
+    private void googleAdIdGetter() {
+        Adjust.getGoogleAdId(context, googleAdId -> {
+            MainActivity.testLibrary.addInfoToSend("gps_adid", googleAdId);
+            MainActivity.testLibrary.sendInfoToServer(basePath);
+        });
+    }
+
+    private void amazonAdIdGetter() {
+        Adjust.getAmazonAdId(context, amazonAdId -> {
+            MainActivity.testLibrary.addInfoToSend("fire_adid", amazonAdId);
             MainActivity.testLibrary.sendInfoToServer(basePath);
         });
     }
