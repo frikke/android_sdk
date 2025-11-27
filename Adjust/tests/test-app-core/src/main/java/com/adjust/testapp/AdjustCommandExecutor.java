@@ -935,7 +935,7 @@ public class AdjustCommandExecutor {
 
     private void attributionGetterWithTimeout() {
         long timeout = Long.parseLong(command.getFirstParameterValue("timeout"));
-        Adjust.getAttributionWithTimeout(timeout, attribution -> {
+        Adjust.getAttributionWithTimeout(context, timeout, attribution -> {
             Map<String, String> fields = new HashMap<>();
             if (attribution != null) {
                 if (attribution.trackerToken != null)
@@ -969,7 +969,7 @@ public class AdjustCommandExecutor {
             }
 
             MainActivity.testLibrary.sendInfoToServer(basePath);
-        }, context);
+        });
     }
 
     private void adidGetter() {
@@ -981,14 +981,14 @@ public class AdjustCommandExecutor {
 
     private void adidGetterWithTimeout() {
         long timeout = Long.parseLong(command.getFirstParameterValue("timeout"));
-        Adjust.getAdidWithTimeout(timeout, adid -> {
+        Adjust.getAdidWithTimeout(context, timeout, adid -> {
             if (adid != null) {
                 MainActivity.testLibrary.addInfoToSend("adid", adid);
             } else {
                 MainActivity.testLibrary.addInfoToSend("adid", "null");
             }
             MainActivity.testLibrary.sendInfoToServer(basePath);
-        }, context);
+        });
     }
 
     private void getLastDeeplink() {

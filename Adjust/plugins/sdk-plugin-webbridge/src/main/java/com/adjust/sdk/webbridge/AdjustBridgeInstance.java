@@ -770,12 +770,13 @@ public class AdjustBridgeInstance {
         if (!isInitialized()) {
             return;
         }
-        Adjust.getAdidWithTimeout(timeoutInMilliSec, new OnAdidReadListener() {
-            @Override
-            public void onAdidRead(String adid) {
-                AdjustBridgeUtil.execAdidCallbackCommand(webView, callback, adid);
-            }
-        }, application.getApplicationContext());
+        Adjust.getAdidWithTimeout(application.getApplicationContext(), timeoutInMilliSec,
+                new OnAdidReadListener() {
+                    @Override
+                    public void onAdidRead(String adid) {
+                        AdjustBridgeUtil.execAdidCallbackCommand(webView, callback, adid);
+                    }
+                });
     }
 
     @JavascriptInterface
@@ -797,13 +798,13 @@ public class AdjustBridgeInstance {
         if (!isInitialized()) {
             return;
         }
-        Adjust.getAttributionWithTimeout(timeoutInMilliSec, new OnAttributionReadListener() {
-            @Override
-            public void onAttributionRead(AdjustAttribution attribution) {
-                AdjustBridgeUtil.execAttributionCallbackCommand(webView, callback, attribution);
-            }
-
-        }, application.getApplicationContext());
+        Adjust.getAttributionWithTimeout(application.getApplicationContext(), timeoutInMilliSec,
+                new OnAttributionReadListener() {
+                    @Override
+                    public void onAttributionRead(AdjustAttribution attribution) {
+                        AdjustBridgeUtil.execAttributionCallbackCommand(webView, callback, attribution);
+                    }
+                });
     }
 
     @JavascriptInterface

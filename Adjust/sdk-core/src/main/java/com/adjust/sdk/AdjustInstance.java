@@ -533,11 +533,11 @@ public class AdjustInstance {
     /**
      * Called to get value of unique Adjust device identifier.
      *
+     * @param context Application context
      * @param timeoutInMilliSec  Timeout in milliseconds.
      * @param onAdidReadListener Callback to get triggered once identifier is obtained.
-     * @param context Application context
      */
-    public void getAdidWithTimeout(long timeoutInMilliSec, OnAdidReadListener onAdidReadListener, Context context) {
+    public void getAdidWithTimeout(Context context, long timeoutInMilliSec, OnAdidReadListener onAdidReadListener) {
         if (!checkActivityHandler("getAdidWithTimeout")) {
             ThreadExecutor executor = new SingleThreadCachedScheduler("getAdidWithTimeout");
             executor.submit(new Runnable() {
@@ -581,11 +581,11 @@ public class AdjustInstance {
     /**
      * Called to get user's current attribution value.
      *
+     * @param context Application context
      * @param timeoutInMilliSec       Timeout in milliseconds.
      * @param attributionReadListener Callback to get triggered once attribution is obtained.
-     * @param context Application context
      */
-    public void getAttributionWithTimeout(long timeoutInMilliSec, OnAttributionReadListener attributionReadListener, Context context) {
+    public void getAttributionWithTimeout(Context context, long timeoutInMilliSec, OnAttributionReadListener attributionReadListener) {
         if (!checkActivityHandler("getAttributionWithTimeout")) {
             ThreadExecutor executor = new SingleThreadCachedScheduler("getAttributionWithTimeout");
             executor.submit(new Runnable() {
