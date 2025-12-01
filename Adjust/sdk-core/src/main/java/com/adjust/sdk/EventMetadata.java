@@ -1,43 +1,27 @@
 package com.adjust.sdk;
 
 
-import android.content.Context;
-
-import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.ObjectStreamField;
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 
-public class EventMetadata {
-    private static final String EVENT_METADATA_FILENAME = "AdjustEventMetadata";
-    private static final String EVENT_METADATA_NAME = "Event metadata";
+public class EventMetadata implements Serializable {
+    private static final long serialVersionUID = 1L;
+    @SuppressWarnings("unchecked")
+    private static final ObjectStreamField[] serialPersistentFields = {
+            new ObjectStreamField("eventSequence", (Class<Map<String,Integer>>)(Class)Map.class),
+    };
 
-    private @NonNull Map<String, Integer> eventSequence;
-    private @NonNull final  ILogger logger;
-    private @Nullable Context context;
+    private Map<String, Integer> eventSequence;
 
     public EventMetadata() {
         eventSequence = new HashMap<>();
-        logger = AdjustFactory.getLogger();
-    }
-
-    @SuppressWarnings("unchecked")
-    public void readState(Context context) {
-        this.context = context;
-        try {
-            Map<String, Integer> readEventSequence = Util.readObject(context,
-              EVENT_METADATA_FILENAME,
-              EVENT_METADATA_NAME,
-              (Class<Map<String,Integer>>)(Class)Map.class);
-            if (readEventSequence != null) {
-                eventSequence = readEventSequence;
-            } else {
-                logger.error("Read null event metadata file");
-            }
-        } catch (Exception e) {
-            logger.error("Failed to read event metadata file (%s)", e.getMessage());
-        }
     }
 
     public int incrementSequenceForEvent(String eventToken) {
@@ -47,7 +31,6 @@ public class EventMetadata {
         final int newSequence = (oldSequence != null ? oldSequence : 0) + 1;
 
         eventSequence.put(eventToken, newSequence);
-        writeEventMetadata();
 
         return newSequence;
     }
@@ -71,15 +54,12 @@ public class EventMetadata {
         return hashCode;
     }
 
-    private void writeEventMetadata() {
-        if (context == null) {
-            logger.error("Could not write event metadata before having context from reading");
-            return;
-        }
-        Util.writeObject(eventSequence, context, EVENT_METADATA_FILENAME, EVENT_METADATA_NAME);
+    private void writeObject(ObjectOutputStream stream) throws IOException {
+        stream.defaultWriteObject();
     }
 
-    public static boolean deleteState(Context context) {
-        return context.deleteFile(EVENT_METADATA_FILENAME);
+    private void readObject(ObjectInputStream stream) throws ClassNotFoundException, IOException {
+        ObjectInputStream.GetField fields = stream.readFields();
+        eventSequence = Util.readObjectField(fields, "eventSequence", null);
     }
 }
