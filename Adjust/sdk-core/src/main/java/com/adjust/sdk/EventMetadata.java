@@ -60,6 +60,6 @@ public class EventMetadata implements Serializable {
 
     private void readObject(ObjectInputStream stream) throws ClassNotFoundException, IOException {
         ObjectInputStream.GetField fields = stream.readFields();
-        eventSequence = Util.readObjectField(fields, "eventSequence", null);
+        eventSequence = Util.readObjectField(fields, "eventSequence", new HashMap<>());
     }
 }
