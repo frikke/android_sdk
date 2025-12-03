@@ -475,18 +475,21 @@ public class ActivityHandler
             writeActivityStateI();
         }
 
-        final ArrayList<OnAdidReadListener> cachedAdidReadCallbacksCopy;
-        if (!cachedAdidReadCallbacks.isEmpty()) {
-            synchronized (cachedAdidReadCallbacks) {
+        ArrayList<OnAdidReadListener> cachedAdidReadCallbacksCopy = null;
+        synchronized (cachedAdidReadCallbacks) {
+            if (!cachedAdidReadCallbacks.isEmpty()) {
                 cachedAdidReadCallbacksCopy = new ArrayList<>(cachedAdidReadCallbacks);
                 cachedAdidReadCallbacks.clear();
             }
+        }
 
-            // process regular adid callbacks
+        // process regular adid callbacks
+        if (cachedAdidReadCallbacksCopy != null) {
+            ArrayList<OnAdidReadListener> finalCachedAdidReadCallbacksCopy = cachedAdidReadCallbacksCopy;
             new Handler(adjustConfig.context.getMainLooper()).post(new Runnable() {
                 @Override
                 public void run() {
-                    for (OnAdidReadListener onAdidReadListener : cachedAdidReadCallbacksCopy) {
+                    for (OnAdidReadListener onAdidReadListener : finalCachedAdidReadCallbacksCopy) {
                         if (onAdidReadListener != null) {
                             onAdidReadListener.onAdidRead(adid);
                         }
@@ -495,19 +498,21 @@ public class ActivityHandler
             });
         }
 
-        final ArrayList<AdjustTimeoutCallback> cachedAdidReadTimeoutCallbacksCopy;
-        if (!cachedAdidReadTimeoutCallbacks.isEmpty()) {
-
-            synchronized (cachedAdidReadTimeoutCallbacks) {
+        ArrayList<AdjustTimeoutCallback> cachedAdidReadTimeoutCallbacksCopy = null;
+        synchronized (cachedAdidReadTimeoutCallbacks) {
+            if (!cachedAdidReadTimeoutCallbacks.isEmpty()) {
                 cachedAdidReadTimeoutCallbacksCopy = new ArrayList<>(cachedAdidReadTimeoutCallbacks);
                 cachedAdidReadTimeoutCallbacks.clear();
             }
+        }
 
-            // process timeout adid callbacks
+        // process timeout adid callbacks
+        if (cachedAdidReadTimeoutCallbacksCopy != null) {
+            ArrayList<AdjustTimeoutCallback> finalCachedAdidReadTimeoutCallbacksCopy = cachedAdidReadTimeoutCallbacksCopy;
             new Handler(adjustConfig.context.getMainLooper()).post(new Runnable() {
                 @Override
                 public void run() {
-                    for (AdjustTimeoutCallback adjustTimeoutCallback : cachedAdidReadTimeoutCallbacksCopy) {
+                    for (AdjustTimeoutCallback adjustTimeoutCallback : finalCachedAdidReadTimeoutCallbacksCopy) {
                         if (adjustTimeoutCallback != null) {
                             // cancel any pending timeout
                             TimerOnce timerOnce = adjustTimeoutCallback.getTimeoutTimer();
@@ -539,18 +544,21 @@ public class ActivityHandler
             return false;
         }
 
-        final ArrayList<OnAttributionReadListener> cachedAttributionReadCallbacksCopy;
-        if (! cachedAttributionReadCallbacks.isEmpty()) {
-            synchronized (cachedAttributionReadCallbacks) {
+        ArrayList<OnAttributionReadListener> cachedAttributionReadCallbacksCopy = null;
+        synchronized (cachedAttributionReadCallbacks) {
+            if (! cachedAttributionReadCallbacks.isEmpty()) {
                 cachedAttributionReadCallbacksCopy = new ArrayList<>(cachedAttributionReadCallbacks);
                 cachedAttributionReadCallbacks.clear();
             }
+        }
 
-            // process regular attribution callbacks
+        // process regular attribution callbacks
+        if (cachedAttributionReadCallbacksCopy != null) {
+            ArrayList<OnAttributionReadListener> finalCachedAttributionReadCallbacksCopy = cachedAttributionReadCallbacksCopy;
             new Handler(adjustConfig.context.getMainLooper()).post(new Runnable() {
                 @Override
                 public void run() {
-                    for (OnAttributionReadListener onAttributionReadListener : cachedAttributionReadCallbacksCopy) {
+                    for (OnAttributionReadListener onAttributionReadListener : finalCachedAttributionReadCallbacksCopy) {
                         if (onAttributionReadListener != null) {
                             onAttributionReadListener.onAttributionRead(attribution);
                         }
@@ -559,19 +567,21 @@ public class ActivityHandler
             });
         }
 
-        final ArrayList<AdjustTimeoutCallback> cachedAttributionReadTimeoutCallbacksCopy;
-        if (! cachedAttributionReadTimeoutCallbacks.isEmpty()) {
-
-            synchronized (cachedAttributionReadTimeoutCallbacks) {
+        ArrayList<AdjustTimeoutCallback> cachedAttributionReadTimeoutCallbacksCopy = null;
+        synchronized (cachedAttributionReadTimeoutCallbacks) {
+            if (! cachedAttributionReadTimeoutCallbacks.isEmpty()) {
                 cachedAttributionReadTimeoutCallbacksCopy = new ArrayList<>(cachedAttributionReadTimeoutCallbacks);
                 cachedAttributionReadTimeoutCallbacks.clear();
             }
+        }
 
-            // process timeout attribution callbacks
+        // process timeout attribution callbacks
+        if (cachedAttributionReadTimeoutCallbacksCopy != null) {
+            ArrayList<AdjustTimeoutCallback> finalCachedAttributionReadTimeoutCallbacksCopy = cachedAttributionReadTimeoutCallbacksCopy;
             new Handler(adjustConfig.context.getMainLooper()).post(new Runnable() {
                 @Override
                 public void run() {
-                    for (AdjustTimeoutCallback adjustTimeoutCallback : cachedAttributionReadTimeoutCallbacksCopy) {
+                    for (AdjustTimeoutCallback adjustTimeoutCallback : finalCachedAttributionReadTimeoutCallbacksCopy) {
                         if (adjustTimeoutCallback != null) {
                             // cancel any pending timeout
                             TimerOnce timerOnce = adjustTimeoutCallback.getTimeoutTimer();
@@ -1235,22 +1245,31 @@ public class ActivityHandler
             adjustConfig.cachedAttributionReadCallbacks.clear();
         }
 
-        if (! cachedAttributionReadCallbacks.isEmpty()
-                && attribution != null)
-        {
-            final ArrayList<OnAttributionReadListener> cachedAttributionReadCallbacksCopy;
-            synchronized (cachedAttributionReadCallbacks) {
+        synchronized (cachedAttributionReadTimeoutCallbacks) {
+            cachedAttributionReadTimeoutCallbacks.addAll(adjustConfig.cachedAttributionReadTimeoutCallbacks);
+            adjustConfig.cachedAttributionReadTimeoutCallbacks.clear();
+        }
+
+        if (attribution == null) {
+            return;
+        }
+
+        ArrayList<OnAttributionReadListener> cachedAttributionReadCallbacksCopy = null;
+        synchronized (cachedAttributionReadCallbacks) {
+            if (! cachedAttributionReadCallbacks.isEmpty()) {
                 cachedAttributionReadCallbacksCopy = new ArrayList<>(cachedAttributionReadCallbacks);
                 cachedAttributionReadCallbacks.clear();
             }
+        }
 
+        // process regular attribution callbacks
+        if (cachedAttributionReadCallbacksCopy != null) {
             final AdjustAttribution attributionCopy = attribution;
-
-            // process regular attribution callbacks
+            ArrayList<OnAttributionReadListener> finalCachedAttributionReadCallbacksCopy = cachedAttributionReadCallbacksCopy;
             new Handler(adjustConfig.context.getMainLooper()).post(new Runnable() {
                 @Override
                 public void run() {
-                    for (OnAttributionReadListener onAttributionReadListener : cachedAttributionReadCallbacksCopy) {
+                    for (OnAttributionReadListener onAttributionReadListener : finalCachedAttributionReadCallbacksCopy) {
                         if (onAttributionReadListener != null) {
                             onAttributionReadListener.onAttributionRead(attributionCopy);
                         }
@@ -1259,27 +1278,22 @@ public class ActivityHandler
             });
         }
 
+        ArrayList<AdjustTimeoutCallback> cachedAttributionReadTimeoutCallbacksCopy = null;
         synchronized (cachedAttributionReadTimeoutCallbacks) {
-            cachedAttributionReadTimeoutCallbacks.addAll(adjustConfig.cachedAttributionReadTimeoutCallbacks);
-            adjustConfig.cachedAttributionReadTimeoutCallbacks.clear();
-        }
-
-        if (! cachedAttributionReadTimeoutCallbacks.isEmpty()
-                && attribution != null)
-        {
-            final ArrayList<AdjustTimeoutCallback> cachedAttributionReadTimeoutCallbacksCopy;
-            synchronized (cachedAttributionReadTimeoutCallbacks) {
+            if (! cachedAttributionReadTimeoutCallbacks.isEmpty()) {
                 cachedAttributionReadTimeoutCallbacksCopy = new ArrayList<>(cachedAttributionReadTimeoutCallbacks);
                 cachedAttributionReadTimeoutCallbacks.clear();
             }
+        }
 
+        // process timeout attribution callbacks
+        if (cachedAttributionReadTimeoutCallbacksCopy != null) {
             final AdjustAttribution attributionCopy = attribution;
-
-            // process timeout attribution callbacks
+            ArrayList<AdjustTimeoutCallback> finalCachedAttributionReadTimeoutCallbacksCopy = cachedAttributionReadTimeoutCallbacksCopy;
             new Handler(adjustConfig.context.getMainLooper()).post(new Runnable() {
                 @Override
                 public void run() {
-                    for (AdjustTimeoutCallback adjustTimeoutCallback : cachedAttributionReadTimeoutCallbacksCopy) {
+                    for (AdjustTimeoutCallback adjustTimeoutCallback : finalCachedAttributionReadTimeoutCallbacksCopy) {
                         if (adjustTimeoutCallback != null) {
                             // cancel any pending timeout
                             TimerOnce timerOnce = adjustTimeoutCallback.getTimeoutTimer();
@@ -1306,22 +1320,31 @@ public class ActivityHandler
             adjustConfig.cachedAdidReadCallbacks.clear();
         }
 
-        if (! cachedAdidReadCallbacks.isEmpty()
-          && activityState != null
-          && activityState.adid != null)
-        {
-            final ArrayList<OnAdidReadListener> cachedAdidReadCallbacksCopy;
-            synchronized (cachedAdidReadCallbacks) {
+        synchronized (cachedAdidReadTimeoutCallbacks) {
+            cachedAdidReadTimeoutCallbacks.addAll(adjustConfig.cachedAdidReadTimeoutCallbacks);
+            adjustConfig.cachedAdidReadTimeoutCallbacks.clear();
+        }
+
+        if (activityState == null || activityState.adid == null) {
+            return;
+        }
+
+        ArrayList<OnAdidReadListener> cachedAdidReadCallbacksCopy = null;
+        synchronized (cachedAdidReadCallbacks) {
+            if (! cachedAdidReadCallbacks.isEmpty()) {
                 cachedAdidReadCallbacksCopy = new ArrayList<>(cachedAdidReadCallbacks);
                 cachedAdidReadCallbacks.clear();
             }
-            final String adidCopy = activityState.adid;
+        }
 
-            // process regular adid callbacks
+        // process regular adid callbacks
+        if (cachedAdidReadCallbacksCopy != null) {
+            final String adidCopy = activityState.adid;
+            ArrayList<OnAdidReadListener> finalCachedAdidReadCallbacksCopy = cachedAdidReadCallbacksCopy;
             new Handler(adjustConfig.context.getMainLooper()).post(new Runnable() {
                 @Override
                 public void run() {
-                    for (OnAdidReadListener onAdidReadListener : cachedAdidReadCallbacksCopy) {
+                    for (OnAdidReadListener onAdidReadListener : finalCachedAdidReadCallbacksCopy) {
                         if (onAdidReadListener != null) {
                             onAdidReadListener.onAdidRead(adidCopy);
                         }
@@ -1330,28 +1353,23 @@ public class ActivityHandler
             });
         }
 
-        synchronized (cachedAdidReadTimeoutCallbacks) {
-            cachedAdidReadTimeoutCallbacks.addAll(adjustConfig.cachedAdidReadTimeoutCallbacks);
-            adjustConfig.cachedAdidReadTimeoutCallbacks.clear();
-        }
 
-        if (! cachedAdidReadTimeoutCallbacks.isEmpty()
-                && activityState != null
-                && activityState.adid != null)
-        {
-            final ArrayList<AdjustTimeoutCallback> cachedAdidReadTimeoutCallbacksCopy;
-            synchronized (cachedAdidReadTimeoutCallbacks) {
+        ArrayList<AdjustTimeoutCallback> cachedAdidReadTimeoutCallbacksCopy = null;
+        synchronized (cachedAdidReadTimeoutCallbacks) {
+            if (! cachedAdidReadTimeoutCallbacks.isEmpty()) {
                 cachedAdidReadTimeoutCallbacksCopy = new ArrayList<>(cachedAdidReadTimeoutCallbacks);
                 cachedAdidReadTimeoutCallbacks.clear();
             }
+        }
 
+        // process timeout adid callbacks
+        if (cachedAdidReadTimeoutCallbacksCopy != null) {
             final String adidCopy = activityState.adid;
-
-            // process timeout adid callbacks
+            ArrayList<AdjustTimeoutCallback> finalCachedAdidReadTimeoutCallbacksCopy = cachedAdidReadTimeoutCallbacksCopy;
             new Handler(adjustConfig.context.getMainLooper()).post(new Runnable() {
                 @Override
                 public void run() {
-                    for (AdjustTimeoutCallback adjustTimeoutCallback : cachedAdidReadTimeoutCallbacksCopy) {
+                    for (AdjustTimeoutCallback adjustTimeoutCallback : finalCachedAdidReadTimeoutCallbacksCopy) {
                         if (adjustTimeoutCallback != null) {
                             // cancel any pending timeout
                             TimerOnce timerOnce = adjustTimeoutCallback.getTimeoutTimer();

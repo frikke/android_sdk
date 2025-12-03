@@ -522,9 +522,7 @@ public class AdjustInstance {
      */
     public void getAdid(OnAdidReadListener onAdidReadListener) {
         if (!checkActivityHandler("getAdid")) {
-            synchronized (cachedAdidReadCallbacks) {
-                cachedAdidReadCallbacks.add(onAdidReadListener);
-            }
+            cachedAdidReadCallbacks.add(onAdidReadListener);
             return;
         }
         activityHandler.getAdid(onAdidReadListener);
@@ -570,9 +568,7 @@ public class AdjustInstance {
      */
     public void getAttribution(OnAttributionReadListener attributionReadListener) {
         if (!checkActivityHandler("getAttribution")) {
-            synchronized (cachedAttributionReadCallbacks) {
-                cachedAttributionReadCallbacks.add(attributionReadListener);
-            }
+            cachedAttributionReadCallbacks.add(attributionReadListener);
             return;
         }
         activityHandler.getAttribution(attributionReadListener);

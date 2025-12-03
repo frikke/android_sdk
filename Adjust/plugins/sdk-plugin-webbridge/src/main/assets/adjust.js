@@ -234,18 +234,24 @@ var Adjust = {
     getAdidWithTimeout: function (timeoutInMilliSec, callback) {
      if (AdjustBridge) {
             if (typeof callback === 'string' || callback instanceof String) {
-                this.getAdIdCallbackName = callback;
+                this.getAdIdWithTimeoutCallbackName = callback;
             } else {
-                this.getAdIdCallbackName = 'Adjust.adjust_getAdIdCallback';
-                this.getAdIdCallbackFunction = callback;
+                this.getAdIdWithTimeoutCallbackName = 'Adjust.adjust_getAdIdWithTimeoutCallback';
+                this.getAdIdWithTimeoutCallbackFunction = callback;
             }
-            AdjustBridge.getAdidWithTimeout(timeoutInMilliSec, this.getAdIdCallbackName);
+            AdjustBridge.getAdidWithTimeout(timeoutInMilliSec, this.getAdIdWithTimeoutCallbackName);
         }
     },
 
     adjust_getAdIdCallback: function (adId) {
         if (AdjustBridge && this.getAdIdCallbackFunction) {
             this.getAdIdCallbackFunction(adId);
+        }
+    },
+
+    adjust_getAdIdWithTimeoutCallback: function (adId) {
+        if (AdjustBridge && this.getAdIdWithTimeoutCallbackFunction) {
+            this.getAdIdWithTimeoutCallbackFunction(adId);
         }
     },
 
@@ -282,18 +288,24 @@ var Adjust = {
     getAttributionWithTimeout: function (timeoutInMilliSec, callback) {
      if (AdjustBridge) {
             if (typeof callback === 'string' || callback instanceof String) {
-                this.getAttributionCallbackName = callback;
+                this.getAttributionWithTimeoutCallbackName = callback;
             } else {
-                this.getAttributionCallbackName = 'Adjust.adjust_getAttributionCallback';
-                this.getAttributionCallbackFunction = callback;
+                this.getAttributionWithTimeoutCallbackName = 'Adjust.adjust_getAttributionWithTimeoutCallback';
+                this.getAttributionWithTimeoutCallbackFunction = callback;
             }
-            AdjustBridge.getAttributionWithTimeout(timeoutInMilliSec, this.getAttributionCallbackName);
+            AdjustBridge.getAttributionWithTimeout(timeoutInMilliSec, this.getAttributionWithTimeoutCallbackName);
         }
     },
 
     adjust_getAttributionCallback: function (attribution) {
         if (AdjustBridge && this.getAttributionCallbackFunction) {
             this.getAttributionCallbackFunction(attribution);
+        }
+    },
+
+    adjust_getAttributionWithTimeoutCallback: function (attribution) {
+        if (AdjustBridge && this.getAttributionWithTimeoutCallbackFunction) {
+            this.getAttributionWithTimeoutCallbackFunction(attribution);
         }
     },
 
