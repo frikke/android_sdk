@@ -1004,11 +1004,14 @@ public class AdjustCommandExecutor {
     }
 
     private void getLastDeeplink() {
+        String testId = command.getFirstParameterValue("id");
         final String localBasePath = basePath;
+
         Adjust.getLastDeeplink(context, new OnLastDeeplinkReadListener() {
             @Override
             public void onLastDeeplinkRead(Uri deeplink) {
                 MainActivity.testLibrary.addInfoToSend("last_deeplink", deeplink == null ? "" : deeplink.toString());
+                MainActivity.testLibrary.addInfoToSend("id", testId);
                 MainActivity.testLibrary.sendInfoToServer(localBasePath);
             }
         });
