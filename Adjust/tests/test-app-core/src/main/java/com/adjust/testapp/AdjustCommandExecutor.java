@@ -901,8 +901,11 @@ public class AdjustCommandExecutor {
     }
 
     private void attributionGetter() {
+        String testId = command.getFirstParameterValue("id");
+
         Adjust.getAttribution(attribution -> {
             Map<String, String> fields = new HashMap<>();
+            fields.put("id", testId);
             if (attribution.trackerToken != null)
                 fields.put("tracker_token", attribution.trackerToken);
             if (attribution.trackerName != null)
@@ -935,8 +938,11 @@ public class AdjustCommandExecutor {
 
     private void attributionGetterWithTimeout() {
         long timeout = Long.parseLong(command.getFirstParameterValue("timeout"));
+        String testId = command.getFirstParameterValue("id");
+
         Adjust.getAttributionWithTimeout(context, timeout, attribution -> {
             Map<String, String> fields = new HashMap<>();
+            fields.put("id", testId);
             if (attribution != null) {
                 if (attribution.trackerToken != null)
                     fields.put("tracker_token", attribution.trackerToken);
@@ -973,20 +979,26 @@ public class AdjustCommandExecutor {
     }
 
     private void adidGetter() {
+        String testId = command.getFirstParameterValue("id");
+
         Adjust.getAdid(adid -> {
             MainActivity.testLibrary.addInfoToSend("adid", adid);
+            MainActivity.testLibrary.addInfoToSend("id", testId);
             MainActivity.testLibrary.sendInfoToServer(basePath);
         });
     }
 
     private void adidGetterWithTimeout() {
         long timeout = Long.parseLong(command.getFirstParameterValue("timeout"));
+        String testId = command.getFirstParameterValue("id");
+
         Adjust.getAdidWithTimeout(context, timeout, adid -> {
             if (adid != null) {
                 MainActivity.testLibrary.addInfoToSend("adid", adid);
             } else {
                 MainActivity.testLibrary.addInfoToSend("adid", "null");
             }
+            MainActivity.testLibrary.addInfoToSend("id", testId);
             MainActivity.testLibrary.sendInfoToServer(basePath);
         });
     }
@@ -1032,22 +1044,31 @@ public class AdjustCommandExecutor {
     }
 
     private void sdkVersionGetter() {
+        String testId = command.getFirstParameterValue("id");
+
         Adjust.getSdkVersion(sdkVersion -> {
             MainActivity.testLibrary.addInfoToSend("sdk_version", sdkVersion);
+            MainActivity.testLibrary.addInfoToSend("id", testId);
             MainActivity.testLibrary.sendInfoToServer(basePath);
         });
     }
 
     private void googleAdIdGetter() {
+        String testId = command.getFirstParameterValue("id");
+
         Adjust.getGoogleAdId(context, googleAdId -> {
             MainActivity.testLibrary.addInfoToSend("gps_adid", googleAdId);
+            MainActivity.testLibrary.addInfoToSend("id", testId);
             MainActivity.testLibrary.sendInfoToServer(basePath);
         });
     }
 
     private void amazonAdIdGetter() {
+        String testId = command.getFirstParameterValue("id");
+
         Adjust.getAmazonAdId(context, amazonAdId -> {
             MainActivity.testLibrary.addInfoToSend("fire_adid", amazonAdId);
+            MainActivity.testLibrary.addInfoToSend("id", testId);
             MainActivity.testLibrary.sendInfoToServer(basePath);
         });
     }
