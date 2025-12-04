@@ -698,7 +698,9 @@ AdjustCommandExecutor.prototype.sendReferrer = function(params) {
 };
 
 AdjustCommandExecutor.prototype.attributionGetter = function(params) {
+    var testId = getFirstParameterValue(params, 'id');
     var basePath = this.basePath;
+
     Adjust.getAttribution(function(attribution) {
         TestLibrary.addInfoToSend("tracker_token", attribution.trackerToken);
         TestLibrary.addInfoToSend("tracker_name", attribution.trackerName);
@@ -713,30 +715,40 @@ AdjustCommandExecutor.prototype.attributionGetter = function(params) {
         TestLibrary.addInfoToSend("fb_install_referrer", attribution.fbInstallReferrer);
         TestLibrary.addInfoToSend("json_response", JSON.stringify(attribution.jsonResponse));
 
+        TestLibrary.addInfoToSend("id", testId);
         TestLibrary.sendInfoToServer(basePath);
     });
 };
 
 AdjustCommandExecutor.prototype.sdkVersionGetter = function(params) {
+    var testId = getFirstParameterValue(params, 'id');
     var basePath = this.basePath;
+
     Adjust.getSdkVersion(function(sdkVersion) {
         TestLibrary.addInfoToSend("sdk_version", sdkVersion);
+        TestLibrary.addInfoToSend("id", testId);
         TestLibrary.sendInfoToServer(basePath);
     });
 };
 
 AdjustCommandExecutor.prototype.googleAdIdGetter = function(params) {
+    var testId = getFirstParameterValue(params, 'id');
     var basePath = this.basePath;
+
     Adjust.getGoogleAdId(function(googleAdId) {
         TestLibrary.addInfoToSend("gps_adid", googleAdId);
+        TestLibrary.addInfoToSend("id", testId);
         TestLibrary.sendInfoToServer(basePath);
     });
 };
 
 AdjustCommandExecutor.prototype.amazonAdIdGetter = function(params) {
+    var testId = getFirstParameterValue(params, 'id');
     var basePath = this.basePath;
+
     Adjust.getAmazonAdId(function(amazonAdId) {
         TestLibrary.addInfoToSend("fire_adid", amazonAdId);
+        TestLibrary.addInfoToSend("id", testId);
         TestLibrary.sendInfoToServer(basePath);
     });
 };
@@ -744,7 +756,9 @@ AdjustCommandExecutor.prototype.amazonAdIdGetter = function(params) {
 AdjustCommandExecutor.prototype.attributionGetterWithTimeout = function(params) {
         var timeoutS = getFirstParameterValue(params, 'timeout');
         var timeout = parseInt(timeoutS);
+        var testId = getFirstParameterValue(params, 'id');
         var basePath = this.basePath;
+
         Adjust.getAttributionWithTimeout(timeout, function(attribution) {
             if (attribution != null) {
                 TestLibrary.addInfoToSend("tracker_token", attribution.trackerToken);
@@ -763,31 +777,38 @@ AdjustCommandExecutor.prototype.attributionGetterWithTimeout = function(params) 
                 TestLibrary.addInfoToSend("attribution", "null");
             }
 
+            TestLibrary.addInfoToSend("id", testId);
             TestLibrary.sendInfoToServer(basePath);
         });
 };
 
 AdjustCommandExecutor.prototype.adidGetter = function(params) {
-        var basePath = this.basePath;
-        Adjust.getAdid(function(adid) {
-            TestLibrary.addInfoToSend("adid", adid);
-            TestLibrary.sendInfoToServer(basePath);
-        });
+    var testId = getFirstParameterValue(params, 'id');
+    var basePath = this.basePath;
+
+    Adjust.getAdid(function(adid) {
+        TestLibrary.addInfoToSend("adid", adid);
+        TestLibrary.addInfoToSend("id", testId);
+        TestLibrary.sendInfoToServer(basePath);
+    });
 };
 
 AdjustCommandExecutor.prototype.adidGetterWithTimeout = function(params) {
-        var timeoutS = getFirstParameterValue(params, 'timeout');
-        var timeout = parseInt(timeoutS);
-        var basePath = this.basePath;
-        Adjust.getAdidWithTimeout(timeout, function(adid) {
-            if (adid != null) {
-                TestLibrary.addInfoToSend("adid", adid);
-            } else {
-                TestLibrary.addInfoToSend("adid", "null");
-            }
+    var timeoutS = getFirstParameterValue(params, 'timeout');
+    var timeout = parseInt(timeoutS);
+    var testId = getFirstParameterValue(params, 'id');
+    var basePath = this.basePath;
 
-            TestLibrary.sendInfoToServer(basePath);
-        });
+    Adjust.getAdidWithTimeout(timeout, function(adid) {
+        if (adid != null) {
+            TestLibrary.addInfoToSend("adid", adid);
+        } else {
+            TestLibrary.addInfoToSend("adid", "null");
+        }
+
+        TestLibrary.addInfoToSend("id", testId);
+        TestLibrary.sendInfoToServer(basePath);
+    });
 };
 
 //Util
