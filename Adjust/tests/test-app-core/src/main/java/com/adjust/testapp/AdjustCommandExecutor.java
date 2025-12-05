@@ -901,11 +901,11 @@ public class AdjustCommandExecutor {
     }
 
     private void attributionGetter() {
-        String testId = command.getFirstParameterValue("id");
+        String testCallbackId = command.getFirstParameterValue("testCallbackId");
 
         Adjust.getAttribution(attribution -> {
             Map<String, String> fields = new HashMap<>();
-            fields.put("id", testId);
+            fields.put("test_callback_id", testCallbackId);
             if (attribution.trackerToken != null)
                 fields.put("tracker_token", attribution.trackerToken);
             if (attribution.trackerName != null)
@@ -938,11 +938,11 @@ public class AdjustCommandExecutor {
 
     private void attributionGetterWithTimeout() {
         long timeout = Long.parseLong(command.getFirstParameterValue("timeout"));
-        String testId = command.getFirstParameterValue("id");
+        String testCallbackId = command.getFirstParameterValue("testCallbackId");
 
         Adjust.getAttributionWithTimeout(context, timeout, attribution -> {
             Map<String, String> fields = new HashMap<>();
-            fields.put("id", testId);
+            fields.put("test_callback_id", testCallbackId);
             if (attribution != null) {
                 if (attribution.trackerToken != null)
                     fields.put("tracker_token", attribution.trackerToken);
@@ -979,18 +979,18 @@ public class AdjustCommandExecutor {
     }
 
     private void adidGetter() {
-        String testId = command.getFirstParameterValue("id");
+        String testCallbackId = command.getFirstParameterValue("testCallbackId");
 
         Adjust.getAdid(adid -> {
             MainActivity.testLibrary.addInfoToSend("adid", adid);
-            MainActivity.testLibrary.addInfoToSend("id", testId);
+            MainActivity.testLibrary.addInfoToSend("test_callback_id", testCallbackId);
             MainActivity.testLibrary.sendInfoToServer(basePath);
         });
     }
 
     private void adidGetterWithTimeout() {
         long timeout = Long.parseLong(command.getFirstParameterValue("timeout"));
-        String testId = command.getFirstParameterValue("id");
+        String testCallbackId = command.getFirstParameterValue("testCallbackId");
 
         Adjust.getAdidWithTimeout(context, timeout, adid -> {
             if (adid != null) {
@@ -998,20 +998,20 @@ public class AdjustCommandExecutor {
             } else {
                 MainActivity.testLibrary.addInfoToSend("adid", "null");
             }
-            MainActivity.testLibrary.addInfoToSend("id", testId);
+            MainActivity.testLibrary.addInfoToSend("test_callback_id", testCallbackId);
             MainActivity.testLibrary.sendInfoToServer(basePath);
         });
     }
 
     private void getLastDeeplink() {
-        String testId = command.getFirstParameterValue("id");
+        String testCallbackId = command.getFirstParameterValue("testCallbackId");
         final String localBasePath = basePath;
 
         Adjust.getLastDeeplink(context, new OnLastDeeplinkReadListener() {
             @Override
             public void onLastDeeplinkRead(Uri deeplink) {
                 MainActivity.testLibrary.addInfoToSend("last_deeplink", deeplink == null ? "" : deeplink.toString());
-                MainActivity.testLibrary.addInfoToSend("id", testId);
+                MainActivity.testLibrary.addInfoToSend("test_callback_id", testCallbackId);
                 MainActivity.testLibrary.sendInfoToServer(localBasePath);
             }
         });
@@ -1047,31 +1047,31 @@ public class AdjustCommandExecutor {
     }
 
     private void sdkVersionGetter() {
-        String testId = command.getFirstParameterValue("id");
+        String testCallbackId = command.getFirstParameterValue("testCallbackId");
 
         Adjust.getSdkVersion(sdkVersion -> {
             MainActivity.testLibrary.addInfoToSend("sdk_version", sdkVersion);
-            MainActivity.testLibrary.addInfoToSend("id", testId);
+            MainActivity.testLibrary.addInfoToSend("test_callback_id", testCallbackId);
             MainActivity.testLibrary.sendInfoToServer(basePath);
         });
     }
 
     private void googleAdIdGetter() {
-        String testId = command.getFirstParameterValue("id");
+        String testCallbackId = command.getFirstParameterValue("testCallbackId");
 
         Adjust.getGoogleAdId(context, googleAdId -> {
             MainActivity.testLibrary.addInfoToSend("gps_adid", googleAdId);
-            MainActivity.testLibrary.addInfoToSend("id", testId);
+            MainActivity.testLibrary.addInfoToSend("test_callback_id", testCallbackId);
             MainActivity.testLibrary.sendInfoToServer(basePath);
         });
     }
 
     private void amazonAdIdGetter() {
-        String testId = command.getFirstParameterValue("id");
+        String testCallbackId = command.getFirstParameterValue("testCallbackId");
 
         Adjust.getAmazonAdId(context, amazonAdId -> {
             MainActivity.testLibrary.addInfoToSend("fire_adid", amazonAdId);
-            MainActivity.testLibrary.addInfoToSend("id", testId);
+            MainActivity.testLibrary.addInfoToSend("test_callback_id", testCallbackId);
             MainActivity.testLibrary.sendInfoToServer(basePath);
         });
     }
