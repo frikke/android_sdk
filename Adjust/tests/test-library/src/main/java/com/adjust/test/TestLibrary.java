@@ -147,21 +147,38 @@ public class TestLibrary {
     }
 
     public void addInfoToSend(String key, String value) {
-        if (infoToServer == null) {
-            infoToServer = new HashMap<String, String>();
+        synchronized (this) {
+            if (infoToServer == null) {
+                infoToServer = new HashMap<String, String>();
+            }
+            infoToServer.put(key, value);
         }
-        infoToServer.put(key, value);
     }
 
     public void setInfoToSend(Map<String, String> info) {
-        infoToServer = info;
+        synchronized (this) {
+            infoToServer = info;
+        }
     }
 
     public void sendInfoToServer(final String basePath) {
+        // Create a snapshot of the current infoToServer map to avoid race conditions
+        // when multiple callbacks execute concurrently
+        final Map<String, String> infoSnapshot;
+        synchronized (this) {
+            if (infoToServer == null || infoToServer.isEmpty()) {
+                infoSnapshot = new HashMap<String, String>();
+            } else {
+                infoSnapshot = new HashMap<String, String>(infoToServer);
+            }
+            // Clear the shared map immediately so next callback starts fresh
+            infoToServer = null;
+        }
+        
         executor.submit(new Runnable() {
             @Override
             public void run() {
-                sendInfoToServerI(basePath);
+                sendInfoToServerI(basePath, infoSnapshot);
             }
         });
     }
@@ -178,9 +195,8 @@ public class TestLibrary {
         readResponseI(response);
     }
 
-    private void sendInfoToServerI(String basePath) {
-        Networking.Response response = networking.sendPost("/test_info", basePath, infoToServer);
-        infoToServer = null;
+    private void sendInfoToServerI(String basePath, Map<String, String> infoToSend) {
+        Networking.Response response = networking.sendPost("/test_info", basePath, infoToSend);
         readResponseI(response);
     }
 

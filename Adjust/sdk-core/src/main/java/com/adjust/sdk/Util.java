@@ -685,6 +685,13 @@ public class Util {
         return !adjustConfig.coppaComplianceEnabled && !adjustConfig.playStoreKidsComplianceEnabled;
     }
 
+    public static boolean canReadAppSetId(final AdjustConfig adjustConfig) {
+        if (!adjustConfig.isAppSetIdReadingEnabled) {
+            return false;
+        }
+        return canReadPlayIds(adjustConfig);
+    }
+
     public static boolean isGooglePlayGamesForPC(final Context context) {
         PackageManager pm = context.getPackageManager();
         return pm.hasSystemFeature("com.google.android.play.feature.HPE_EXPERIENCE");
@@ -799,5 +806,26 @@ public class Util {
         }
 
         return attribution;
+    }
+
+    public static String getAdidFromActivityStateFile(final Context context) {
+        ActivityState activityState = Util.readObject(
+                context,
+                Constants.ACTIVITY_STATE_FILENAME,
+                "Activity state",
+                ActivityState.class);
+        if (activityState == null) {
+            return null;
+        } else {
+            return activityState.adid;
+        }
+    }
+
+    public static AdjustAttribution getAttributionFromAttributionFile(final Context context) {
+        return Util.readObject(
+                context,
+                Constants.ATTRIBUTION_FILENAME,
+                "Attribution",
+                AdjustAttribution.class);
     }
 }

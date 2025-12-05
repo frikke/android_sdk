@@ -27,6 +27,7 @@ import com.adjust.sdk.AdjustStoreInfo;
 import com.adjust.sdk.AdjustTestOptions;
 import com.adjust.sdk.AdjustThirdPartySharing;
 import com.adjust.sdk.LogLevel;
+import com.adjust.sdk.OnAdidReadListener;
 import com.adjust.sdk.OnAttributionChangedListener;
 import com.adjust.sdk.OnDeeplinkResolvedListener;
 import com.adjust.sdk.OnDeferredDeeplinkResponseListener;
@@ -95,11 +96,17 @@ public class AdjustCommandExecutor {
                 case "verifyTrack": verifyTrack(); break;
                 case "processDeeplink" : processDeeplink(); break;
                 case "attributionGetter" : attributionGetter(); break;
+                case "attributionGetterWithTimeout" : attributionGetterWithTimeout(); break;
+                case "adidGetter" : adidGetter(); break;
+                case "adidGetterWithTimeout" : adidGetterWithTimeout(); break;
                 case "getLastDeeplink" : getLastDeeplink(); break;
                 case "endFirstSessionDelay" : endFirstSessionDelay(); break;
                 case "coppaComplianceInDelay" : coppaComplianceInDelay(); break;
                 case "playStoreKidsComplianceInDelay" : playStoreKidsComplianceInDelay(); break;
                 case "externalDeviceIdInDelay" : externalDeviceIdInDelay(); break;
+                case "sdkVersionGetter" : sdkVersionGetter(); break;
+                case "googleAdIdGetter" : googleAdIdGetter(); break;
+                case "amazonAdIdGetter" : amazonAdIdGetter(); break;
                 //case "testBegin": testBegin(); break;
                 // case "testEnd": testEnd(); break;
             }
@@ -486,6 +493,14 @@ public class AdjustCommandExecutor {
             boolean firstSessionDelayEnabled = "true".equals(firstSessionDelayEnabledS);
             if (firstSessionDelayEnabled) {
                 adjustConfig.enableFirstSessionDelay();
+            }
+        }
+
+        if (command.containsParameter("appSetIdReadingEnabled")) {
+            String appSetIdReadingEnabledS = command.getFirstParameterValue("appSetIdReadingEnabled");
+            boolean appSetIdReadingEnabled = "true".equals(appSetIdReadingEnabledS);
+            if (!appSetIdReadingEnabled) {
+                adjustConfig.disableAppSetIdReading();
             }
         }
     }
@@ -886,8 +901,11 @@ public class AdjustCommandExecutor {
     }
 
     private void attributionGetter() {
+        String testCallbackId = command.getFirstParameterValue("testCallbackId");
+
         Adjust.getAttribution(attribution -> {
             Map<String, String> fields = new HashMap<>();
+            fields.put("test_callback_id", testCallbackId);
             if (attribution.trackerToken != null)
                 fields.put("tracker_token", attribution.trackerToken);
             if (attribution.trackerName != null)
@@ -918,12 +936,82 @@ public class AdjustCommandExecutor {
         });
     }
 
+    private void attributionGetterWithTimeout() {
+        long timeout = Long.parseLong(command.getFirstParameterValue("timeout"));
+        String testCallbackId = command.getFirstParameterValue("testCallbackId");
+
+        Adjust.getAttributionWithTimeout(context, timeout, attribution -> {
+            Map<String, String> fields = new HashMap<>();
+            fields.put("test_callback_id", testCallbackId);
+            if (attribution != null) {
+                if (attribution.trackerToken != null)
+                    fields.put("tracker_token", attribution.trackerToken);
+                if (attribution.trackerName != null)
+                    fields.put("tracker_name", attribution.trackerName);
+                if (attribution.network != null)
+                    fields.put("network", attribution.network);
+                if (attribution.campaign != null)
+                    fields.put("campaign", attribution.campaign);
+                if (attribution.adgroup != null)
+                    fields.put("adgroup", attribution.adgroup);
+                if (attribution.creative != null)
+                    fields.put("creative", attribution.creative);
+                if (attribution.clickLabel != null)
+                    fields.put("click_label", attribution.clickLabel);
+                if (attribution.costType != null)
+                    fields.put("cost_type", attribution.costType);
+                if (attribution.costAmount != null)
+                    fields.put("cost_amount", attribution.costAmount.toString());
+                if (attribution.costCurrency != null)
+                    fields.put("cost_currency", attribution.costCurrency);
+                if (attribution.fbInstallReferrer != null)
+                    fields.put("fb_install_referrer", attribution.fbInstallReferrer);
+                if (attribution.jsonResponse != null)
+                    fields.put("json_response", attribution.jsonResponse);
+
+                MainActivity.testLibrary.setInfoToSend(fields);
+            } else {
+                MainActivity.testLibrary.addInfoToSend("attribution", "null");
+            }
+
+            MainActivity.testLibrary.sendInfoToServer(basePath);
+        });
+    }
+
+    private void adidGetter() {
+        String testCallbackId = command.getFirstParameterValue("testCallbackId");
+
+        Adjust.getAdid(adid -> {
+            MainActivity.testLibrary.addInfoToSend("adid", adid);
+            MainActivity.testLibrary.addInfoToSend("test_callback_id", testCallbackId);
+            MainActivity.testLibrary.sendInfoToServer(basePath);
+        });
+    }
+
+    private void adidGetterWithTimeout() {
+        long timeout = Long.parseLong(command.getFirstParameterValue("timeout"));
+        String testCallbackId = command.getFirstParameterValue("testCallbackId");
+
+        Adjust.getAdidWithTimeout(context, timeout, adid -> {
+            if (adid != null) {
+                MainActivity.testLibrary.addInfoToSend("adid", adid);
+            } else {
+                MainActivity.testLibrary.addInfoToSend("adid", "null");
+            }
+            MainActivity.testLibrary.addInfoToSend("test_callback_id", testCallbackId);
+            MainActivity.testLibrary.sendInfoToServer(basePath);
+        });
+    }
+
     private void getLastDeeplink() {
+        String testCallbackId = command.getFirstParameterValue("testCallbackId");
         final String localBasePath = basePath;
+
         Adjust.getLastDeeplink(context, new OnLastDeeplinkReadListener() {
             @Override
             public void onLastDeeplinkRead(Uri deeplink) {
                 MainActivity.testLibrary.addInfoToSend("last_deeplink", deeplink == null ? "" : deeplink.toString());
+                MainActivity.testLibrary.addInfoToSend("test_callback_id", testCallbackId);
                 MainActivity.testLibrary.sendInfoToServer(localBasePath);
             }
         });
@@ -956,6 +1044,36 @@ public class AdjustCommandExecutor {
     private void externalDeviceIdInDelay() {
         String externalDeviceId = command.getFirstParameterValue("externalDeviceId");
         Adjust.setExternalDeviceIdInDelay(externalDeviceId);
+    }
+
+    private void sdkVersionGetter() {
+        String testCallbackId = command.getFirstParameterValue("testCallbackId");
+
+        Adjust.getSdkVersion(sdkVersion -> {
+            MainActivity.testLibrary.addInfoToSend("sdk_version", sdkVersion);
+            MainActivity.testLibrary.addInfoToSend("test_callback_id", testCallbackId);
+            MainActivity.testLibrary.sendInfoToServer(basePath);
+        });
+    }
+
+    private void googleAdIdGetter() {
+        String testCallbackId = command.getFirstParameterValue("testCallbackId");
+
+        Adjust.getGoogleAdId(context, googleAdId -> {
+            MainActivity.testLibrary.addInfoToSend("gps_adid", googleAdId);
+            MainActivity.testLibrary.addInfoToSend("test_callback_id", testCallbackId);
+            MainActivity.testLibrary.sendInfoToServer(basePath);
+        });
+    }
+
+    private void amazonAdIdGetter() {
+        String testCallbackId = command.getFirstParameterValue("testCallbackId");
+
+        Adjust.getAmazonAdId(context, amazonAdId -> {
+            MainActivity.testLibrary.addInfoToSend("fire_adid", amazonAdId);
+            MainActivity.testLibrary.addInfoToSend("test_callback_id", testCallbackId);
+            MainActivity.testLibrary.sendInfoToServer(basePath);
+        });
     }
 /*
     private void testBegin() {

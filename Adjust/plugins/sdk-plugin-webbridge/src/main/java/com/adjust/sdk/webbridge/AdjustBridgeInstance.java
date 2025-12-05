@@ -145,6 +145,7 @@ public class AdjustBridgeInstance {
             Object eventDeduplicationIdsMaxSizeField = jsonAdjustConfig.get("eventDeduplicationIdsMaxSize");
             Object isFirstSessionDelayEnabledField = jsonAdjustConfig.get("isFirstSessionDelayEnabled");
             Object storeInfoField = jsonAdjustConfig.get("storeInfo");
+            Object isAppSetIdReadingEnabledField = jsonAdjustConfig.get("isAppSetIdReadingEnabled");
 
             String appToken = AdjustBridgeUtil.fieldToString(appTokenField);
             String environment = AdjustBridgeUtil.fieldToString(environmentField);
@@ -396,6 +397,14 @@ public class AdjustBridgeInstance {
                 adjustConfig.setStoreInfo(storeInfo);
             } catch (Exception e) {
                 AdjustFactory.getLogger().error("AdjustBridgeInstance storeInfo: %s", e.getMessage());
+            }
+
+            // AppSetId reading
+            Boolean isAppSetIdReadingEnabled = AdjustBridgeUtil.fieldToBoolean(isAppSetIdReadingEnabledField);
+            if (isAppSetIdReadingEnabled != null) {
+                if (!isAppSetIdReadingEnabled) {
+                    adjustConfig.disableAppSetIdReading();
+                }
             }
 
             Adjust.initSdk(adjustConfig);
@@ -757,6 +766,20 @@ public class AdjustBridgeInstance {
     }
 
     @JavascriptInterface
+    public void getAdidWithTimeout(final long timeoutInMilliSec, final String callback) {
+        if (!isInitialized()) {
+            return;
+        }
+        Adjust.getAdidWithTimeout(application.getApplicationContext(), timeoutInMilliSec,
+                new OnAdidReadListener() {
+                    @Override
+                    public void onAdidRead(String adid) {
+                        AdjustBridgeUtil.execAdidCallbackCommand(webView, callback, adid);
+                    }
+                });
+    }
+
+    @JavascriptInterface
     public void getAttribution(final String callback) {
         if (!isInitialized()) {
             return;
@@ -768,6 +791,20 @@ public class AdjustBridgeInstance {
             }
 
         });
+    }
+
+    @JavascriptInterface
+    public void getAttributionWithTimeout(final long timeoutInMilliSec, final String callback) {
+        if (!isInitialized()) {
+            return;
+        }
+        Adjust.getAttributionWithTimeout(application.getApplicationContext(), timeoutInMilliSec,
+                new OnAttributionReadListener() {
+                    @Override
+                    public void onAttributionRead(AdjustAttribution attribution) {
+                        AdjustBridgeUtil.execAttributionCallbackCommand(webView, callback, attribution);
+                    }
+                });
     }
 
     @JavascriptInterface

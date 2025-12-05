@@ -1,4 +1,48 @@
+// generate random callback ID with prefix (similar to iOS implementation)
+window.randomCallbackIdWithPrefix = function(prefix) {
+    const randomString = (Math.random() + 1).toString(36).substring(7);
+    return prefix + "_" + randomString;
+};
+
 var Adjust = {
+    // map to store callbacks by their unique callback ID
+    _callbackMap: {},
+    
+    _handleGetterCallback: function(callback, callbackId) {
+        // store callback in map
+        this._callbackMap[callbackId] = callback;
+
+        // create a function on window with the callbackId name
+        // this function will be called by the native side
+        window[callbackId] = (function(adjustInstance, storedCallbackId) {
+            return function(value) {
+                var callback = adjustInstance._callbackMap[storedCallbackId];
+                if (callback) {
+                    // for attribution, the native side passes a JSON object that's already parsed
+                    // for other values, they're passed as strings
+                    if (storedCallbackId.includes("adjust_getAttribution")) {
+                        // value is already a JavaScript object (parsed from JSON)
+                        // only parse if it's actually a string (shouldn't happen)
+                        if (typeof value === 'string') {
+                            callback(JSON.parse(value));
+                        } else {
+                            callback(value);
+                        }
+                    } else {
+                        callback(value);
+                    }
+                    // clean up: remove callback and delete the function
+                    delete adjustInstance._callbackMap[storedCallbackId];
+                    delete window[storedCallbackId];
+                } else {
+                    // callback was already cleaned up (teardown was called)
+                    // safely remove the window function to prevent memory leaks
+                    delete window[storedCallbackId];
+                }
+            };
+        })(this, callbackId);
+    },
+
     initSdk: function (adjustConfig) {
         if (adjustConfig && !adjustConfig.getSdkPrefix()) {
             adjustConfig.setSdkPrefix(this.getSdkPrefix());
@@ -49,23 +93,12 @@ var Adjust = {
         }
         // supports legacy return with callback
         if (arguments.length === 1) {
-            // with manual string call
-            if (typeof callback === 'string' || callback instanceof String) {
-                this.isEnabledCallbackName = callback;
-            } else {
-                // or save callback and call later
-                this.isEnabledCallbackName = 'Adjust.adjust_isEnabledCallback';
-                this.isEnabledCallbackFunction = callback;
-            }
-            AdjustBridge.isEnabled(this.isEnabledCallbackName);
+            // generate unique callback ID
+            const callbackId = window.randomCallbackIdWithPrefix("adjust_isEnabled");
+            this._handleGetterCallback(callback, callbackId);
+            AdjustBridge.isEnabled(callbackId);
         } else {
             return AdjustBridge.isEnabled();
-        }
-    },
-
-    adjust_isEnabledCallback: function (isEnabled) {
-        if (AdjustBridge && this.isEnabledCallbackFunction) {
-            this.isEnabledCallbackFunction(isEnabled);
         }
     },
 
@@ -195,99 +228,62 @@ var Adjust = {
 
     getGoogleAdId: function (callback) {
         if (AdjustBridge) {
-            if (typeof callback === 'string' || callback instanceof String) {
-                this.getGoogleAdIdCallbackName = callback;
-            } else {
-                this.getGoogleAdIdCallbackName = 'Adjust.adjust_getGoogleAdIdCallback';
-                this.getGoogleAdIdCallbackFunction = callback;
-            }
-            AdjustBridge.getGoogleAdId(this.getGoogleAdIdCallbackName);
-        }
-    },
-
-    adjust_getGoogleAdIdCallback: function (googleAdId) {
-        if (AdjustBridge && this.getGoogleAdIdCallbackFunction) {
-            this.getGoogleAdIdCallbackFunction(googleAdId);
-        }
-    },
-
-    getAmazonAdId: function (callback) {
-        if (AdjustBridge) {
-            return AdjustBridge.getAmazonAdId();
-        } else {
-            return undefined;
+            const callbackId = window.randomCallbackIdWithPrefix("adjust_getGoogleAdId");
+            this._handleGetterCallback(callback, callbackId);
+            AdjustBridge.getGoogleAdId(callbackId);
         }
     },
 
     getAdid: function (callback) {
-     if (AdjustBridge) {
-            if (typeof callback === 'string' || callback instanceof String) {
-                this.getAdIdCallbackName = callback;
-            } else {
-                this.getAdIdCallbackName = 'Adjust.adjust_getAdIdCallback';
-                this.getAdIdCallbackFunction = callback;
-            }
-            AdjustBridge.getAdid(this.getAdIdCallbackName);
+        if (AdjustBridge) {
+            const callbackId = window.randomCallbackIdWithPrefix("adjust_getAdid");
+            this._handleGetterCallback(callback, callbackId);
+            AdjustBridge.getAdid(callbackId);
         }
     },
 
-    adjust_getAdIdCallback: function (adId) {
-        if (AdjustBridge && this.getAdIdCallbackFunction) {
-            this.getAdIdCallbackFunction(adId);
+    getAdidWithTimeout: function (timeoutInMilliSec, callback) {
+        if (AdjustBridge) {
+            const callbackId = window.randomCallbackIdWithPrefix("adjust_getAdidWithTimeout");
+            this._handleGetterCallback(callback, callbackId);
+            AdjustBridge.getAdidWithTimeout(timeoutInMilliSec, callbackId);
         }
     },
 
-    getAmazonAdId: function (callbackSuccess,callbackFail) {
-         if (AdjustBridge) {
-                if (typeof callbackSuccess === 'string' || callbackSuccess instanceof String) {
-                    this.getAmazonIdCallbackSuccessName = callbackSuccess;
-                } else {
-                    this.getAmazonIdCallbackSuccessName = 'Adjust.adjust_getAmazonIdCallbackSuccess';
-                    this.getAmazonIdCallbackSuccessFunction = callbackSuccess;
-                }
-                AdjustBridge.getAmazonAdId(this.getAmazonIdCallbackSuccessName);
-            }
-    },
-
-    adjust_getAmazonIdCallbackSuccess: function (amazonId) {
-        if (AdjustBridge && this.getAmazonIdCallbackSuccessFunction) {
-            this.getAmazonIdCallbackSuccessFunction(amazonId);
+    getAmazonAdId: function (callbackSuccess, callbackFail) {
+        if (AdjustBridge) {
+            const callbackId = window.randomCallbackIdWithPrefix("adjust_getAmazonAdId");
+            this._handleGetterCallback(callbackSuccess, callbackId);
+            // note: Java side only supports success callback, callbackFail is ignored
+            AdjustBridge.getAmazonAdId(callbackId);
         }
     },
 
     getAttribution: function (callback) {
-     if (AdjustBridge) {
-            if (typeof callback === 'string' || callback instanceof String) {
-                this.getAttributionCallbackName = callback;
-            } else {
-                this.getAttributionCallbackName = 'Adjust.adjust_getAttributionCallback';
-                this.getAttributionCallbackFunction = callback;
-            }
-            AdjustBridge.getAttribution(this.getAttributionCallbackName);
+        if (AdjustBridge) {
+            const callbackId = window.randomCallbackIdWithPrefix("adjust_getAttribution");
+            this._handleGetterCallback(callback, callbackId);
+            AdjustBridge.getAttribution(callbackId);
         }
     },
 
-    adjust_getAttributionCallback: function (attribution) {
-        if (AdjustBridge && this.getAttributionCallbackFunction) {
-            this.getAttributionCallbackFunction(attribution);
+    getAttributionWithTimeout: function (timeoutInMilliSec, callback) {
+        if (AdjustBridge) {
+            const callbackId = window.randomCallbackIdWithPrefix("adjust_getAttributionWithTimeout");
+            this._handleGetterCallback(callback, callbackId);
+            AdjustBridge.getAttributionWithTimeout(timeoutInMilliSec, callbackId);
         }
     },
 
     getSdkVersion: function (callback) {
         if (AdjustBridge) {
-            if (typeof callback === 'string' || callback instanceof String) {
-                this.getSdkVersionCallbackName = callback;
-            } else {
-                this.getSdkVersionCallbackName = 'Adjust.adjust_getSdkVersionCallback';
-                this.getSdkVersionCallbackFunction = callback;
-            }
-            AdjustBridge.getSdkVersion(this.getSdkVersionCallbackName);
-        }
-    },
-
-    adjust_getSdkVersionCallback: function (sdkVersion) {
-        if (AdjustBridge && this.getSdkVersionCallbackFunction) {
-            this.getSdkVersionCallbackFunction(this.getSdkPrefix() + '@' + sdkVersion);
+            const callbackId = window.randomCallbackIdWithPrefix("adjust_getSdkVersion");
+            // wrap callback to add SDK prefix before passing to _handleGetterCallback
+            const wrappedCallback = function(sdkVersion) {
+                callback(Adjust.getSdkPrefix() + '@' + sdkVersion);
+            };
+            this._handleGetterCallback(wrappedCallback, callbackId);
+            AdjustBridge.getSdkVersion(callbackId);
         }
     },
 
@@ -295,7 +291,7 @@ var Adjust = {
         if (this.adjustConfig) {
             return this.adjustConfig.getSdkPrefix();
         } else {
-            return 'web-bridge5.4.6';
+            return 'web-bridge5.5.0';
         }
     },
 
@@ -304,17 +300,6 @@ var Adjust = {
             AdjustBridge.teardown();
         }
         this.adjustConfig = undefined;
-        this.isEnabledCallbackName = undefined;
-        this.isEnabledCallbackFunction = undefined;
-        this.getGoogleAdIdCallbackName = undefined;
-        this.getGoogleAdIdCallbackFunction = undefined;
-        this.getAdIdCallbackName = undefined;
-        this.getAdIdCallbackFunction = undefined;
-        this.getAttributionCallbackName = undefined;
-        this.getAttributionCallbackFunction = undefined;
-        this.getAmazonIdCallbackSuccessName = undefined;
-        this.getAmazonIdCallbackSuccessFunction = undefined;
-        this.getSdkVersionCallbackFunction = undefined;
-        this.getSdkVersionCallbackName = undefined;
+        this._callbackMap = {};
     },
 };

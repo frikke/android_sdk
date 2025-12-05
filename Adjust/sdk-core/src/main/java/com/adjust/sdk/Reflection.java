@@ -6,6 +6,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 public class Reflection {
     public static Object getAdvertisingInfoObject(Context context) throws Exception {
@@ -157,8 +158,8 @@ public class Reflection {
             Object appSetInfoObject =
               invokeStaticMethod("com.google.android.gms.tasks.Tasks",
                 "await",
-                new Class[]{forName("com.google.android.gms.tasks.Task")},
-                taskWithAppSetInfoObject);
+                new Class[]{forName("com.google.android.gms.tasks.Task"), long.class, TimeUnit.class},
+                taskWithAppSetInfoObject, 1L, TimeUnit.SECONDS);
 
             return (String) invokeInstanceMethod(appSetInfoObject,
               "getId", null);

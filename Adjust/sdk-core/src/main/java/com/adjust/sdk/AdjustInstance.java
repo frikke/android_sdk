@@ -2,6 +2,7 @@ package com.adjust.sdk;
 
 import android.net.Uri;
 import android.content.Context;
+import android.os.Handler;
 
 import com.adjust.sdk.scheduler.AsyncTaskExecutor;
 import com.adjust.sdk.scheduler.SingleThreadCachedScheduler;
@@ -49,8 +50,10 @@ public class AdjustInstance {
 
     private OnDeeplinkResolvedListener cachedDeeplinkResolutionCallback;
 
-    private ArrayList<OnAdidReadListener> cachedAdidReadCallbacks = new ArrayList<>();
-    private ArrayList<OnAttributionReadListener> cachedAttributionReadCallbacks = new ArrayList<>();
+    private final ArrayList<OnAdidReadListener> cachedAdidReadCallbacks = new ArrayList<>();
+    private final ArrayList<AdjustTimeoutCallback> cachedAdidReadTimeoutCallbacks = new ArrayList<>();
+    private final ArrayList<OnAttributionReadListener> cachedAttributionReadCallbacks = new ArrayList<>();
+    private final ArrayList<AdjustTimeoutCallback> cachedAttributionReadTimeoutCallbacks = new ArrayList<>();
     /**
      * Base path for Adjust packages.
      */
@@ -104,7 +107,9 @@ public class AdjustInstance {
         adjustConfig.purchaseVerificationPath = this.purchaseVerificationPath;
         adjustConfig.cachedDeeplinkResolutionCallback = cachedDeeplinkResolutionCallback;
         adjustConfig.cachedAdidReadCallbacks = cachedAdidReadCallbacks;
+        adjustConfig.cachedAdidReadTimeoutCallbacks = cachedAdidReadTimeoutCallbacks;
         adjustConfig.cachedAttributionReadCallbacks = cachedAttributionReadCallbacks;
+        adjustConfig.cachedAttributionReadTimeoutCallbacks = cachedAttributionReadTimeoutCallbacks;
 
         activityHandler = AdjustFactory.getActivityHandler(adjustConfig);
         setSendingReferrersAsNotSent(adjustConfig.context);
@@ -524,6 +529,39 @@ public class AdjustInstance {
     }
 
     /**
+     * Called to get value of unique Adjust device identifier.
+     *
+     * @param context Application context
+     * @param timeoutInMilliSec  Timeout in milliseconds.
+     * @param onAdidReadListener Callback to get triggered once identifier is obtained.
+     */
+    public void getAdidWithTimeout(Context context, long timeoutInMilliSec, OnAdidReadListener onAdidReadListener) {
+        if (!checkActivityHandler("getAdidWithTimeout")) {
+            ThreadExecutor executor = new SingleThreadCachedScheduler("getAdidWithTimeout");
+            executor.submit(new Runnable() {
+                @Override
+                public void run() {
+                    String adid = Util.getAdidFromActivityStateFile(context);
+                    if (adid != null) {
+                        new Handler(context.getMainLooper()).post(new Runnable() {
+                            @Override
+                            public void run() {
+                                onAdidReadListener.onAdidRead(adid);
+                            }
+                        });
+                        return;
+                    }
+
+                    // adid not found locally
+                    ActivityHandler.queueGetAdidWithTimeout(timeoutInMilliSec, onAdidReadListener, cachedAdidReadTimeoutCallbacks, context);
+                }
+            });
+            return;
+        }
+        activityHandler.getAdidWithTimeout(timeoutInMilliSec, onAdidReadListener);
+    }
+
+    /**
      * Called to get user's current attribution value.
      *
      * @param attributionReadListener Callback to get triggered once attribution is obtained.
@@ -534,6 +572,38 @@ public class AdjustInstance {
             return;
         }
         activityHandler.getAttribution(attributionReadListener);
+    }
+
+    /**
+     * Called to get user's current attribution value.
+     *
+     * @param context Application context
+     * @param timeoutInMilliSec       Timeout in milliseconds.
+     * @param attributionReadListener Callback to get triggered once attribution is obtained.
+     */
+    public void getAttributionWithTimeout(Context context, long timeoutInMilliSec, OnAttributionReadListener attributionReadListener) {
+        if (!checkActivityHandler("getAttributionWithTimeout")) {
+            ThreadExecutor executor = new SingleThreadCachedScheduler("getAttributionWithTimeout");
+            executor.submit(new Runnable() {
+                @Override
+                public void run() {
+                    AdjustAttribution adjustAttribution = Util.getAttributionFromAttributionFile(context);
+                    if (adjustAttribution != null) {
+                        new Handler(context.getMainLooper()).post(new Runnable() {
+                            @Override
+                            public void run() {
+                                attributionReadListener.onAttributionRead(adjustAttribution);
+                            }
+                        });
+                    } else {
+                        // attribution not found locally
+                        ActivityHandler.queueGetAttributionWithTimeout(timeoutInMilliSec, attributionReadListener, cachedAttributionReadTimeoutCallbacks, context);
+                    }
+                }
+            });
+            return;
+        }
+        activityHandler.getAttributionWithTimeout(timeoutInMilliSec, attributionReadListener);
     }
 
     /**

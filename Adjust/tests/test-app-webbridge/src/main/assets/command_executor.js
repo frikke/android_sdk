@@ -136,10 +136,16 @@ AdjustCommandExecutor.prototype.executeCommand = function(command, idx) {
         case "measurementConsent"             : this.measurementConsent(command.params); break;
         case "trackAdRevenue"                 : this.trackAdRevenue(command.params); break;
         case "attributionGetter"              : this.attributionGetter(command.params); break;
+        case "attributionGetterWithTimeout"   : this.attributionGetterWithTimeout(command.params); break;
+        case "adidGetter"                     : this.adidGetter(command.params); break;
+        case "adidGetterWithTimeout"          : this.adidGetterWithTimeout(command.params); break;
         case "endFirstSessionDelay"           : this.endFirstSessionDelay(command.params); break;
         case "coppaComplianceInDelay"         : this.coppaComplianceInDelay(command.params); break;
         case "playStoreKidsComplianceInDelay" : this.playStoreKidsComplianceInDelay(command.params); break;
         case "externalDeviceIdInDelay"        : this.externalDeviceIdInDelay(command.params); break;
+        case "sdkVersionGetter"               : this.sdkVersionGetter(command.params); break;
+        case "googleAdIdGetter"               : this.googleAdIdGetter(command.params); break;
+        case "amazonAdIdGetter"               : this.amazonAdIdGetter(command.params); break;
         break;
     }
 
@@ -692,23 +698,117 @@ AdjustCommandExecutor.prototype.sendReferrer = function(params) {
 };
 
 AdjustCommandExecutor.prototype.attributionGetter = function(params) {
-        var basePath = this.basePath;
-        Adjust.getAttribution(function(attribution) {
-            TestLibrary.addInfoToSend("tracker_token", attribution.trackerToken);
-            TestLibrary.addInfoToSend("tracker_name", attribution.trackerName);
-            TestLibrary.addInfoToSend("network", attribution.network);
-            TestLibrary.addInfoToSend("campaign", attribution.campaign);
-            TestLibrary.addInfoToSend("adgroup", attribution.adgroup);
-            TestLibrary.addInfoToSend("creative", attribution.creative);
-            TestLibrary.addInfoToSend("click_label", attribution.clickLabel);
-            TestLibrary.addInfoToSend("cost_type", attribution.costType);
-            TestLibrary.addInfoToSend("cost_amount", attribution.costAmount);
-            TestLibrary.addInfoToSend("cost_currency", attribution.costCurrency);
-            TestLibrary.addInfoToSend("fb_install_referrer", attribution.fbInstallReferrer);
-            TestLibrary.addInfoToSend("json_response", JSON.stringify(attribution.jsonResponse));
+    var testCallbackId = getFirstParameterValue(params, 'testCallbackId');
+    var basePath = this.basePath;
 
+    Adjust.getAttribution(function(attribution) {
+        TestLibrary.addInfoToSend("tracker_token", attribution.trackerToken);
+        TestLibrary.addInfoToSend("tracker_name", attribution.trackerName);
+        TestLibrary.addInfoToSend("network", attribution.network);
+        TestLibrary.addInfoToSend("campaign", attribution.campaign);
+        TestLibrary.addInfoToSend("adgroup", attribution.adgroup);
+        TestLibrary.addInfoToSend("creative", attribution.creative);
+        TestLibrary.addInfoToSend("click_label", attribution.clickLabel);
+        TestLibrary.addInfoToSend("cost_type", attribution.costType);
+        TestLibrary.addInfoToSend("cost_amount", attribution.costAmount);
+        TestLibrary.addInfoToSend("cost_currency", attribution.costCurrency);
+        TestLibrary.addInfoToSend("fb_install_referrer", attribution.fbInstallReferrer);
+        TestLibrary.addInfoToSend("json_response", JSON.stringify(attribution.jsonResponse));
+
+        TestLibrary.addInfoToSend("test_callback_id", testCallbackId);
+        TestLibrary.sendInfoToServer(basePath);
+    });
+};
+
+AdjustCommandExecutor.prototype.sdkVersionGetter = function(params) {
+    var testCallbackId = getFirstParameterValue(params, 'testCallbackId');
+    var basePath = this.basePath;
+
+    Adjust.getSdkVersion(function(sdkVersion) {
+        TestLibrary.addInfoToSend("sdk_version", sdkVersion);
+        TestLibrary.addInfoToSend("test_callback_id", testCallbackId);
+        TestLibrary.sendInfoToServer(basePath);
+    });
+};
+
+AdjustCommandExecutor.prototype.googleAdIdGetter = function(params) {
+    var testCallbackId = getFirstParameterValue(params, 'testCallbackId');
+    var basePath = this.basePath;
+
+    Adjust.getGoogleAdId(function(googleAdId) {
+        TestLibrary.addInfoToSend("gps_adid", googleAdId);
+        TestLibrary.addInfoToSend("test_callback_id", testCallbackId);
+        TestLibrary.sendInfoToServer(basePath);
+    });
+};
+
+AdjustCommandExecutor.prototype.amazonAdIdGetter = function(params) {
+    var testCallbackId = getFirstParameterValue(params, 'testCallbackId');
+    var basePath = this.basePath;
+
+    Adjust.getAmazonAdId(function(amazonAdId) {
+        TestLibrary.addInfoToSend("fire_adid", amazonAdId);
+        TestLibrary.addInfoToSend("test_callback_id", testCallbackId);
+        TestLibrary.sendInfoToServer(basePath);
+    });
+};
+
+AdjustCommandExecutor.prototype.attributionGetterWithTimeout = function(params) {
+        var timeoutS = getFirstParameterValue(params, 'timeout');
+        var timeout = parseInt(timeoutS);
+        var testCallbackId = getFirstParameterValue(params, 'testCallbackId');
+        var basePath = this.basePath;
+
+        Adjust.getAttributionWithTimeout(timeout, function(attribution) {
+            if (attribution != null) {
+                TestLibrary.addInfoToSend("tracker_token", attribution.trackerToken);
+                TestLibrary.addInfoToSend("tracker_name", attribution.trackerName);
+                TestLibrary.addInfoToSend("network", attribution.network);
+                TestLibrary.addInfoToSend("campaign", attribution.campaign);
+                TestLibrary.addInfoToSend("adgroup", attribution.adgroup);
+                TestLibrary.addInfoToSend("creative", attribution.creative);
+                TestLibrary.addInfoToSend("click_label", attribution.clickLabel);
+                TestLibrary.addInfoToSend("cost_type", attribution.costType);
+                TestLibrary.addInfoToSend("cost_amount", attribution.costAmount);
+                TestLibrary.addInfoToSend("cost_currency", attribution.costCurrency);
+                TestLibrary.addInfoToSend("fb_install_referrer", attribution.fbInstallReferrer);
+                TestLibrary.addInfoToSend("json_response", JSON.stringify(attribution.jsonResponse));
+            } else {
+                TestLibrary.addInfoToSend("attribution", "null");
+            }
+
+            TestLibrary.addInfoToSend("test_callback_id", testCallbackId);
             TestLibrary.sendInfoToServer(basePath);
         });
+};
+
+AdjustCommandExecutor.prototype.adidGetter = function(params) {
+    var testCallbackId = getFirstParameterValue(params, 'testCallbackId');
+    var basePath = this.basePath;
+
+    Adjust.getAdid(function(adid) {
+        TestLibrary.addInfoToSend("adid", adid);
+        TestLibrary.addInfoToSend("test_callback_id", testCallbackId);
+        TestLibrary.sendInfoToServer(basePath);
+    });
+};
+
+AdjustCommandExecutor.prototype.adidGetterWithTimeout = function(params) {
+    var timeoutS = getFirstParameterValue(params, 'timeout');
+    var timeout = parseInt(timeoutS);
+    var testCallbackId = getFirstParameterValue(params, 'testCallbackId');
+    var basePath = this.basePath;
+
+    Adjust.getAdidWithTimeout(timeout, function(adid) {
+        if (adid != null) {
+            TestLibrary.addInfoToSend("adid", adid);
+        } else {
+            TestLibrary.addInfoToSend("adid", "null");
+        }
+
+        TestLibrary.addInfoToSend("test_callback_id", testCallbackId);
+        TestLibrary.sendInfoToServer(basePath);
+    });
 };
 
 //Util

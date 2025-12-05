@@ -32,7 +32,7 @@ public class Adjust {
      */
     public static synchronized AdjustInstance getDefaultInstance() {
         @SuppressWarnings("unused")
-        String VERSION = "!SDK-VERSION-STRING!:com.adjust.sdk:adjust-android:5.4.6";
+        String VERSION = "!SDK-VERSION-STRING!:com.adjust.sdk:adjust-android:5.5.0";
 
         if (defaultInstance == null) {
             defaultInstance = new AdjustInstance();
@@ -338,6 +338,33 @@ public class Adjust {
     }
 
     /**
+     * Called to get value of unique Adjust device identifier with a timeout
+     *
+     * @param context            Application context
+     * @param timeoutInMilliSec  Timeout in milliseconds. If adid is not available within this time,
+     *                           the callback will return null adid.
+     * @param onAdidReadListener Callback to get triggered once identifier is obtained.
+     */
+    public static void getAdidWithTimeout(final Context context, final long timeoutInMilliSec,
+                                          final OnAdidReadListener onAdidReadListener) {
+        if (context == null) {
+            AdjustFactory.getLogger().error("Context for getting adid can't be null");
+            return;
+        }
+        if (timeoutInMilliSec < 0) {
+            AdjustFactory.getLogger().error("Timeout value for getting adid can't be negative");
+            return;
+        }
+        if (onAdidReadListener == null) {
+            AdjustFactory.getLogger().error("Callback for getting adid can't be null");
+            return;
+        }
+
+        AdjustInstance adjustInstance = Adjust.getDefaultInstance();
+        adjustInstance.getAdidWithTimeout(extractApplicationContext(context), timeoutInMilliSec, onAdidReadListener);
+    }
+
+    /**
      * Called to get user's current attribution value.
      *
      *  @param attributionReadListener Callback to get triggered once attribution is obtained
@@ -349,6 +376,33 @@ public class Adjust {
         }
         AdjustInstance adjustInstance = Adjust.getDefaultInstance();
         adjustInstance.getAttribution(attributionReadListener);
+    }
+
+    /**
+     * Called to get user's current attribution value.
+     *
+     * @param context                 Application context
+     * @param timeoutInMilliSec       Timeout in milliseconds. If attribution is not available within this time,
+     *                                the callback will return null attribution.
+     * @param attributionReadListener Callback to get triggered once attribution is obtained
+     */
+    public static void getAttributionWithTimeout(final Context context, final long timeoutInMilliSec,
+                                                 final OnAttributionReadListener attributionReadListener) {
+        if (context == null) {
+            AdjustFactory.getLogger().error("Context for getting attribution can't be null");
+            return;
+        }
+        if (timeoutInMilliSec < 0) {
+            AdjustFactory.getLogger().error("Timeout value for getting attribution can't be negative");
+            return;
+        }
+        if (attributionReadListener == null) {
+            AdjustFactory.getLogger().error("Callback for getting attribution can't be null");
+            return;
+        }
+
+        AdjustInstance adjustInstance = Adjust.getDefaultInstance();
+        adjustInstance.getAttributionWithTimeout(extractApplicationContext(context), timeoutInMilliSec, attributionReadListener);
     }
 
     /**

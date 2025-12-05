@@ -93,7 +93,11 @@ public interface IActivityHandler {
 
     void getAdid(OnAdidReadListener onAdidReadListener);
 
+    void getAdidWithTimeout(long timeoutInMilliSec, OnAdidReadListener onAdidReadListener);
+
     void getAttribution(OnAttributionReadListener onAttributionReadListener);
+
+    void getAttributionWithTimeout(long timeoutInMilliSec, OnAttributionReadListener onAttributionReadListener);
 
     AdjustConfig getAdjustConfig();
 

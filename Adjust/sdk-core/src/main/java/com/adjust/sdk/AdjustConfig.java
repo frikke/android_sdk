@@ -44,10 +44,13 @@ public class AdjustConfig {
     boolean isDeviceIdsReadingOnceEnabled;
     OnDeeplinkResolvedListener cachedDeeplinkResolutionCallback;
     ArrayList<OnAdidReadListener> cachedAdidReadCallbacks = new ArrayList<>();
+    ArrayList<AdjustTimeoutCallback> cachedAdidReadTimeoutCallbacks = new ArrayList<>();
     Integer eventDeduplicationIdsMaxSize;
     ArrayList<OnAttributionReadListener> cachedAttributionReadCallbacks = new ArrayList<>();
+    ArrayList<AdjustTimeoutCallback> cachedAttributionReadTimeoutCallbacks = new ArrayList<>();
     boolean isFirstSessionDelayEnabled;
     AdjustStoreInfo storeInfo;
+    boolean isAppSetIdReadingEnabled;
 
     public static final String ENVIRONMENT_SANDBOX = "sandbox";
     public static final String ENVIRONMENT_PRODUCTION = "production";
@@ -86,6 +89,7 @@ public class AdjustConfig {
         this.coppaComplianceEnabled = false;
         this.playStoreKidsComplianceEnabled = false;
         this.isFirstSessionDelayEnabled = false;
+        this.isAppSetIdReadingEnabled = true;
     }
 
     public void setLogLevel(LogLevel logLevel) {
@@ -190,6 +194,10 @@ public class AdjustConfig {
         this.onDeferredDeeplinkResponseListener = onDeferredDeeplinkResponseListener;
     }
 
+    public void disableAppSetIdReading() {
+        this.isAppSetIdReadingEnabled = false;
+    }
+
     public Context getContext() {
         return context;
     }
@@ -288,6 +296,10 @@ public class AdjustConfig {
 
     public ILogger getLogger() {
         return logger;
+    }
+
+    public boolean isAppSetIdReadingEnabled() {
+        return isAppSetIdReadingEnabled;
     }
 
     private boolean checkContext(Context context) {

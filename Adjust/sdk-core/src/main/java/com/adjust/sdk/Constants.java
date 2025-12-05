@@ -38,7 +38,7 @@ public interface Constants {
 
     String SCHEME = "https";
     String AUTHORITY = "app.adjust.com";
-    String CLIENT_SDK = "android5.4.6";
+    String CLIENT_SDK = "android5.5.0";
     String LOGTAG = "Adjust";
     String REFTAG = "reftag";
     String INSTALL_REFERRER = "install_referrer";
@@ -58,6 +58,7 @@ public interface Constants {
     String ATTRIBUTION_FILENAME = "AdjustAttribution";
     String GLOBAL_CALLBACK_PARAMETERS_FILENAME = "AdjustGlobalCallbackParameters";
     String GLOBAL_PARTNER_PARAMETERS_FILENAME = "AdjustGlobalPartnerParameters";
+    String EVENT_METADATA_FILENAME = "AdjustEventMetadata";
 
     String MALFORMED = "malformed";
     String SMALL = "small";
@@ -102,4 +103,8 @@ public interface Constants {
     String ADJUST_PREINSTALL_CONTENT_PROVIDER_INTENT_ACTION = "com.attribution.REFERRAL_PROVIDER";
     String ADJUST_PREINSTALL_FILE_SYSTEM_PATH = "/data/local/tmp/adjust.preinstall";
     String EXTRA_SYSTEM_INSTALLER_REFERRER = "com.attribution.EXTRA_SYSTEM_INSTALLER_REFERRER";
+
+    String ADID_TIMEOUT_TIMER_NAME = "Get Adid timeout timer";
+    String ATTRIBUTION_TIMEOUT_TIMER_NAME = "Get Attribution timeout timer";
+
 }
