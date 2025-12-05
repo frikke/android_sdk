@@ -1,3 +1,14 @@
+### Version 5.5.0 (5th December 2025)
+#### Added
+- Added `getAdidWithTimeout` method to the `Adjust` API to allow retrieving the ADID with a specified timeout. If the value is not obtained in time, null is returned.
+- Added `getAttributionWithTimeout` method to the `Adjust` API to allow retrieving the current attribution information with a specified timeout. If the value is not obtained in time, null is returned.
+- Added `disableAppSetIdReading()` method to `AdjustConfig` to allow the SDK to skip reading the App Set ID. 
+
+#### Changed
+- Updated the Adjust Signature library version to 3.62.0.
+
+---
+
 ### Version 5.4.6 (7th November 2025)
 #### Changed
 - Refactored LVL plugin to use direct `Binder` interface instead of `AIDL`.
