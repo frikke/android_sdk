@@ -34,6 +34,10 @@ var Adjust = {
                     // clean up: remove callback and delete the function
                     delete adjustInstance._callbackMap[storedCallbackId];
                     delete window[storedCallbackId];
+                } else {
+                    // callback was already cleaned up (teardown was called)
+                    // safely remove the window function to prevent memory leaks
+                    delete window[storedCallbackId];
                 }
             };
         })(this, callbackId);
@@ -274,22 +278,11 @@ var Adjust = {
     getSdkVersion: function (callback) {
         if (AdjustBridge) {
             const callbackId = window.randomCallbackIdWithPrefix("adjust_getSdkVersion");
-            // store callback with wrapper to add SDK prefix
-            this._callbackMap[callbackId] = function(sdkVersion) {
+            // wrap callback to add SDK prefix before passing to _handleGetterCallback
+            const wrappedCallback = function(sdkVersion) {
                 callback(Adjust.getSdkPrefix() + '@' + sdkVersion);
             };
-            // create a function on window with the callbackId name
-            window[callbackId] = (function(adjustInstance, storedCallbackId) {
-                return function(value) {
-                    var callback = adjustInstance._callbackMap[storedCallbackId];
-                    if (callback) {
-                        callback(value);
-                        // clean up: remove callback and delete the function
-                        delete adjustInstance._callbackMap[storedCallbackId];
-                        delete window[storedCallbackId];
-                    }
-                };
-            })(this, callbackId);
+            this._handleGetterCallback(wrappedCallback, callbackId);
             AdjustBridge.getSdkVersion(callbackId);
         }
     },
