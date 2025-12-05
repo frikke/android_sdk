@@ -2,7 +2,7 @@
 #### Added
 - Added `getAdidWithTimeout` method to the `Adjust` API to allow retrieving the ADID with a specified timeout. If the value is not obtained in time, null is returned.
 - Added `getAttributionWithTimeout` method to the `Adjust` API to allow retrieving the current attribution information with a specified timeout. If the value is not obtained in time, null is returned.
-- Added `disableAppSetIdReading()` method to `AdjustConfig` to allow the SDK to skip reading the App Set ID. 
+- Added `disableAppSetIdReading` method to `AdjustConfig` to allow disabling the SDK’s reading of the app set ID.
 
 #### Changed
 - Updated the Adjust Signature library version to 3.62.0.
