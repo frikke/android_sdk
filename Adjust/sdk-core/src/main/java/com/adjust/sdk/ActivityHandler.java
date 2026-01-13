@@ -45,6 +45,7 @@ import com.adjust.sdk.scheduler.ThreadExecutor;
 import com.adjust.sdk.scheduler.TimerCycle;
 import com.adjust.sdk.scheduler.TimerOnce;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.InputStream;
@@ -389,6 +390,9 @@ public class ActivityHandler
 
     @Override
     public void finishedTrackingActivity(ResponseData responseData) {
+        // process remote triggers from any response
+        processRemoteTriggers(responseData);
+
         // redirect session responses to attribution handler to check for attribution information
         if (responseData instanceof SessionResponseData) {
             logger.debug("Finished tracking session");
@@ -702,6 +706,16 @@ public class ActivityHandler
             @Override
             public void run() {
                 launchPurchaseVerificationResponseTasksI(purchaseVerificationResponseData);
+            }
+        });
+    }
+
+    @Override
+    public void processRemoteTriggers(ResponseData responseData) {
+        executor.submit(new Runnable() {
+            @Override
+            public void run() {
+                processRemoteTriggersI(responseData);
             }
         });
     }
@@ -2121,6 +2135,66 @@ public class ActivityHandler
             this.trackEventI(purchaseVerificationResponseData.activityPackage.event);
         }
     }
+
+    private void processRemoteTriggersI(ResponseData responseData) {
+        if (!isEnabledI()) {
+            return;
+        }
+
+        // process remote triggers independently from other response processing
+        if (responseData.jsonResponse == null) {
+            return;
+        }
+
+        JSONArray remoteTriggers = responseData.jsonResponse.optJSONArray("remote_triggers");
+
+        if (remoteTriggers == null) {
+            return;
+        }
+
+        if (remoteTriggers.length() == 0) {
+            return;
+        }
+
+        if (adjustConfig.onRemoteTriggerListener == null) {
+            return;
+        }
+
+        // process each remote trigger in order
+        for (int i = 0; i < remoteTriggers.length(); i++) {
+            JSONObject remoteTrigger = remoteTriggers.optJSONObject(i);
+            if (remoteTrigger == null) {
+                logger.warn("Invalid remote trigger item, skipping");
+                continue;
+            }
+
+            String label = remoteTrigger.optString("label");
+            if (label.isEmpty()) {
+                logger.warn("Remote trigger missing or invalid label, skipping");
+                continue;
+            }
+
+            JSONObject payload = remoteTrigger.optJSONObject("payload");
+            if (payload == null) {
+                logger.warn("Remote trigger missing or invalid payload, skipping");
+                continue;
+            }
+
+            final AdjustRemoteTrigger adjustRemoteTrigger = new AdjustRemoteTrigger(label, payload);
+            Handler handler = new Handler(adjustConfig.context.getMainLooper());
+            Runnable runnable = new Runnable() {
+                @Override
+                public void run() {
+                    if (adjustConfig.onRemoteTriggerListener != null) {
+                        adjustConfig.onRemoteTriggerListener.onRemoteTrigger(adjustRemoteTrigger);
+                    }
+                }
+            };
+            handler.post(runnable);
+        }
+    }
+
+
 
     private void prepareDeeplinkI(final Uri deeplink, final Handler handler) {
         if (deeplink == null) {

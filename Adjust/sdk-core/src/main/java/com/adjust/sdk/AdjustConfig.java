@@ -25,6 +25,7 @@ public class AdjustConfig {
     OnSessionTrackingSucceededListener onSessionTrackingSucceededListener;
     OnSessionTrackingFailedListener onSessionTrackingFailedListener;
     OnDeferredDeeplinkResponseListener onDeferredDeeplinkResponseListener;
+    OnRemoteTriggerListener onRemoteTriggerListener;
     boolean isSendingInBackgroundEnabled;
     AdjustInstance.PreLaunchActions preLaunchActions;
     ILogger logger;
@@ -194,6 +195,10 @@ public class AdjustConfig {
         this.onDeferredDeeplinkResponseListener = onDeferredDeeplinkResponseListener;
     }
 
+    public void setOnRemoteTriggerListener(OnRemoteTriggerListener onRemoteTriggerListener) {
+        this.onRemoteTriggerListener = onRemoteTriggerListener;
+    }
+
     public void disableAppSetIdReading() {
         this.isAppSetIdReadingEnabled = false;
     }
@@ -292,6 +297,10 @@ public class AdjustConfig {
 
     public OnDeferredDeeplinkResponseListener getOnDeeplinkResponseListener() {
         return onDeferredDeeplinkResponseListener;
+    }
+
+    public OnRemoteTriggerListener getOnRemoteTriggerListener() {
+        return onRemoteTriggerListener;
     }
 
     public ILogger getLogger() {
