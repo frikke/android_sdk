@@ -448,6 +448,16 @@ AdjustCommandExecutor.prototype.config = function(params) {
             TestLibrary.sendInfoToServer(basePath);
         });
     }
+
+    if ('remoteTriggerCallback' in params) {
+        var basePath = this.basePath;
+        adjustConfig.setRemoteTriggerCallback(function(remoteTrigger) {
+            TestLibrary.addInfoToSend("label", remoteTrigger.label);
+            TestLibrary.addInfoToSend("payload", JSON.stringify(remoteTrigger.payload));
+
+            TestLibrary.sendInfoToServer(basePath);
+        });
+    }
 };
 
 AdjustCommandExecutor.prototype.start = function(params) {

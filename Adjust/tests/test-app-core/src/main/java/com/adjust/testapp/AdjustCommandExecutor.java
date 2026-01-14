@@ -21,6 +21,7 @@ import com.adjust.sdk.AdjustEventSuccess;
 import com.adjust.sdk.AdjustPlayStoreSubscription;
 import com.adjust.sdk.AdjustPlayStorePurchase;
 import com.adjust.sdk.AdjustPurchaseVerificationResult;
+import com.adjust.sdk.AdjustRemoteTrigger;
 import com.adjust.sdk.AdjustSessionFailure;
 import com.adjust.sdk.AdjustSessionSuccess;
 import com.adjust.sdk.AdjustStoreInfo;
@@ -35,6 +36,7 @@ import com.adjust.sdk.OnEventTrackingFailedListener;
 import com.adjust.sdk.OnEventTrackingSucceededListener;
 import com.adjust.sdk.OnLastDeeplinkReadListener;
 import com.adjust.sdk.OnPurchaseVerificationFinishedListener;
+import com.adjust.sdk.OnRemoteTriggerListener;
 import com.adjust.sdk.OnSessionTrackingFailedListener;
 import com.adjust.sdk.OnSessionTrackingSucceededListener;
 import com.adjust.test_options.TestConnectionOptions;
@@ -484,6 +486,28 @@ public class AdjustCommandExecutor {
                     MainActivity.testLibrary.addInfoToSend("deeplink", deeplink.toString());
                     MainActivity.testLibrary.sendInfoToServer(localBasePath);
                     return launchDeferredDeeplink;
+                }
+            });
+        }
+
+        if (command.containsParameter("remoteTriggerCallback")) {
+            Log.d("TestApp", "remoteTriggerCallback detected");
+            final String localBasePath = basePath;
+            adjustConfig.setOnRemoteTriggerListener(new OnRemoteTriggerListener() {
+                @Override
+                public void onRemoteTrigger(AdjustRemoteTrigger trigger) {
+                    Log.d("TestApp", "Remote trigger callback called!");
+                    Log.d("TestApp", String.format("onRemoteTrigger label: %s, payload: %s", trigger.getLabel(), trigger.getPayload()));
+                    MainActivity.testLibrary.addInfoToSend("label", trigger.getLabel());
+
+                    if (trigger.getPayload() != null) {
+                        MainActivity.testLibrary.addInfoToSend("payload", trigger.getPayload().toString());
+                    } else {
+                        Log.d("TestApp", "Remote trigger payload is null");
+                        MainActivity.testLibrary.addInfoToSend("payload", "null");
+                    }
+
+                    MainActivity.testLibrary.sendInfoToServer(localBasePath);
                 }
             });
         }
