@@ -39,6 +39,8 @@ function AdjustConfig(appToken, environment, legacy) {
     this.isOpeningDeferredDeeplinkEnabled = null;
     this.deferredDeeplinkCallbackName = null;
     this.deferredDeeplinkCallbackFunction = null;
+    this.remoteTriggerCallbackName = null;
+    this.remoteTriggerCallbackFunction = null;
     this.fbPixelDefaultEventToken = null;
     this.fbPixelMapping = [];
     this.urlStrategyDomains = [];
@@ -194,6 +196,21 @@ AdjustConfig.prototype.setDeferredDeeplinkCallback = function(callback) {
 AdjustConfig.prototype.adjust_deferredDeeplinkCallback = function(deeplink) {
     if (this.deferredDeeplinkCallbackFunction) {
         this.deferredDeeplinkCallbackFunction(deeplink);
+    }
+};
+
+AdjustConfig.prototype.setRemoteTriggerCallback = function(callback) {
+    if (typeof callback === 'string' || callback instanceof String) {
+        this.remoteTriggerCallbackName = callback;
+    } else {
+        this.remoteTriggerCallbackName = 'Adjust.getConfig().adjust_remoteTriggerCallback';
+        this.remoteTriggerCallbackFunction = callback;
+    }
+};
+
+AdjustConfig.prototype.adjust_remoteTriggerCallback = function(remoteTrigger) {
+    if (this.remoteTriggerCallbackFunction) {
+        this.remoteTriggerCallbackFunction(remoteTrigger);
     }
 };
 
