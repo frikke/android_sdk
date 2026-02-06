@@ -21,6 +21,7 @@ public class ObjectInputFilterStream extends ObjectInputStream {
             "java.lang.String",
             "java.util.ArrayList",
             "java.util.HashMap",
+            "java.util.LinkedHashMap",
             "java.util.LinkedList",
             "com.adjust.sdk.ActivityKind",
             "com.adjust.sdk.ActivityPackage",
@@ -35,13 +36,6 @@ public class ObjectInputFilterStream extends ObjectInputStream {
 
     @Override
     protected Class<?> resolveClass(ObjectStreamClass desc) throws ClassNotFoundException, IOException {
-
-        // Allow all primitive types
-        Class<?> resolveClass = super.resolveClass(desc);
-        if (resolveClass.isPrimitive()) {
-            return resolveClass;
-        }
-
         // Block any unknown classes
         if (!ALLOWED_CLASSES.contains(desc.getName())) {
             throw new InvalidClassException("Blocked deserialization", desc.getName());
