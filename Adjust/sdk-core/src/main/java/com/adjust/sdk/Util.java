@@ -29,6 +29,7 @@ import java.io.Closeable;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.InvalidClassException;
 import java.io.NotSerializableException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -216,7 +217,7 @@ public class Util {
             BufferedInputStream bufferedStream = new BufferedInputStream(inputStream);
             closable = bufferedStream;
 
-            ObjectInputStream objectStream = new ObjectInputStream(bufferedStream);
+            ObjectInputStream objectStream = new ObjectInputFilterStream(bufferedStream);
             closable = objectStream;
 
             try {
@@ -224,6 +225,8 @@ public class Util {
                 getLogger().debug("Read %s: %s", objectName, object);
             } catch (ClassNotFoundException e) {
                 getLogger().error("Failed to find %s class (%s)", objectName, e.getMessage());
+            } catch (InvalidClassException e) {
+                getLogger().error("Failed to validate %s class (%s)", objectName, e.getMessage());
             } catch (ClassCastException e) {
                 getLogger().error("Failed to cast %s object (%s)", objectName, e.getMessage());
             } catch (Exception e) {
