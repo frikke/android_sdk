@@ -34,6 +34,8 @@ import javax.net.ssl.X509TrustManager;
  * Created by uerceg on 22/07/16.
  */
 public class AdjustBridgeUtil {
+    private static final String NATIVE_CALLBACK_NAME = "Adjust._nativeCallback";
+
     public static void sendDeeplinkToWebView(final WebView webView, final Uri deeplink) {
         // If web view is initialised, trigger adjust_deeplink method which user should override.
         // In this method, the content of the deeplink will be delivered.
@@ -118,18 +120,7 @@ public class AdjustBridgeUtil {
     }
 
     public static void execAdidCallbackCommand(final WebView webView, final String commandName, final String adid) {
-        if (webView == null) {
-            return;
-        }
-
-        webView.post(new Runnable() {
-            @Override
-            public void run() {
-                String payload = adid == null ? "null" : JSONObject.quote(adid);
-                String command = commandName + "(" + payload + ");";
-                webView.evaluateJavascript(command, null);
-            }
-        });
+        execNativeCallback(webView, commandName, adid == null ? "null" : JSONObject.quote(adid));
     }
 
     public static void execAttributionCallbackCommand(final WebView webView, final String commandName, final AdjustAttribution attribution) {
@@ -155,11 +146,9 @@ public class AdjustBridgeUtil {
                         jsonAttribution.put("fbInstallReferrer", attribution.fbInstallReferrer == null ? JSONObject.NULL : attribution.fbInstallReferrer);
                         jsonAttribution.put("jsonResponse", attribution.jsonResponse == null ? JSONObject.NULL : new JSONObject(attribution.jsonResponse));
 
-                        String command = commandName + "(" + jsonAttribution.toString() + ");";
-                        webView.evaluateJavascript(command, null);
+                        execNativeCallback(webView, commandName, jsonAttribution.toString());
                     } else {
-                        String command = commandName + "(null);";
-                        webView.evaluateJavascript(command, null);
+                        execNativeCallback(webView, commandName, "null");
                     }
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -186,8 +175,7 @@ public class AdjustBridgeUtil {
                     jsonSessionSuccess.put("timestamp", sessionSuccess.timestamp == null ? JSONObject.NULL : sessionSuccess.timestamp);
                     jsonSessionSuccess.put("jsonResponse", sessionSuccess.jsonResponse == null ? JSONObject.NULL : sessionSuccess.jsonResponse);
 
-                    String command = commandName + "(" + jsonSessionSuccess.toString() + ");";
-                    webView.evaluateJavascript(command, null);
+                    execNativeCallback(webView, commandName, jsonSessionSuccess.toString());
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -214,8 +202,7 @@ public class AdjustBridgeUtil {
                     jsonSessionFailure.put("willRetry", sessionFailure.willRetry ? String.valueOf(true) : String.valueOf(false));
                     jsonSessionFailure.put("jsonResponse", sessionFailure.jsonResponse == null ? JSONObject.NULL : sessionFailure.jsonResponse);
 
-                    String command = commandName + "(" + jsonSessionFailure.toString() + ");";
-                    webView.evaluateJavascript(command, null);
+                    execNativeCallback(webView, commandName, jsonSessionFailure.toString());
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -243,8 +230,7 @@ public class AdjustBridgeUtil {
                     jsonEventSuccess.put("callbackId", eventSuccess.callbackId == null ? JSONObject.NULL : eventSuccess.callbackId);
                     jsonEventSuccess.put("jsonResponse", eventSuccess.jsonResponse == null ? JSONObject.NULL : eventSuccess.jsonResponse);
 
-                    String command = commandName + "(" + jsonEventSuccess.toString() + ");";
-                    webView.evaluateJavascript(command, null);
+                    execNativeCallback(webView, commandName, jsonEventSuccess.toString());
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -273,8 +259,7 @@ public class AdjustBridgeUtil {
                     jsonEventFailure.put("callbackId", eventFailure.callbackId == null ? JSONObject.NULL : eventFailure.callbackId);
                     jsonEventFailure.put("jsonResponse", eventFailure.jsonResponse == null ? JSONObject.NULL : eventFailure.jsonResponse);
 
-                    String command = commandName + "(" + jsonEventFailure.toString() + ");";
-                    webView.evaluateJavascript(command, null);
+                    execNativeCallback(webView, commandName, jsonEventFailure.toString());
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -283,18 +268,7 @@ public class AdjustBridgeUtil {
     }
 
     public static void execSingleValueCallback(final WebView webView, final String commandName, final String value) {
-        if (webView == null) {
-            return;
-        }
-
-        webView.post(new Runnable() {
-            @Override
-            public void run() {
-                String payload = value == null ? "null" : JSONObject.quote(value);
-                String command = commandName + "(" + payload + ");";
-                webView.evaluateJavascript(command, null);
-            }
-        });
+        execNativeCallback(webView, commandName, value == null ? "null" : JSONObject.quote(value));
     }
 
     public static String[] jsonArrayToArray(JSONArray jsonArray) throws JSONException {
@@ -310,5 +284,23 @@ public class AdjustBridgeUtil {
 
     public static ILogger getLogger() {
         return AdjustFactory.getLogger();
+    }
+
+    private static void execNativeCallback(final WebView webView, final String commandName, final String payload) {
+        if (webView == null) {
+            return;
+        }
+        if (commandName == null) {
+            return;
+        }
+
+        webView.post(new Runnable() {
+            @Override
+            public void run() {
+                String command = "if (window.Adjust && typeof " + NATIVE_CALLBACK_NAME + " === 'function') { "
+                        + NATIVE_CALLBACK_NAME + "(" + JSONObject.quote(commandName) + ", " + payload + "); }";
+                webView.evaluateJavascript(command, null);
+            }
+        });
     }
 }

@@ -7,47 +7,118 @@ window.randomCallbackIdWithPrefix = function(prefix) {
 var Adjust = {
     // map to store callbacks by their unique callback ID
     _callbackMap: {},
+    _namedCallbackMap: {},
     
     _handleGetterCallback: function(callback, callbackId) {
-        // store callback in map
         this._callbackMap[callbackId] = callback;
-
-        // create a function on window with the callbackId name
-        // this function will be called by the native side
-        window[callbackId] = (function(adjustInstance, storedCallbackId) {
-            return function(value) {
-                var callback = adjustInstance._callbackMap[storedCallbackId];
-                if (callback) {
-                    // for attribution, the native side passes a JSON object that's already parsed
-                    // for other values, they're passed as strings
-                    if (storedCallbackId.includes("adjust_getAttribution")) {
-                        // value is already a JavaScript object (parsed from JSON)
-                        // only parse if it's actually a string (shouldn't happen)
-                        if (typeof value === 'string') {
-                            callback(JSON.parse(value));
-                        } else {
-                            callback(value);
-                        }
-                    } else {
-                        callback(value);
-                    }
-                    // clean up: remove callback and delete the function
-                    delete adjustInstance._callbackMap[storedCallbackId];
-                    delete window[storedCallbackId];
-                } else {
-                    // callback was already cleaned up (teardown was called)
-                    // safely remove the window function to prevent memory leaks
-                    delete window[storedCallbackId];
-                }
-            };
-        })(this, callbackId);
     },
+
+    _registerNamedCallback: function(callbackName, callback) {
+        if (!callbackName || typeof callback !== 'function') {
+            return;
+        }
+        this._namedCallbackMap[callbackName] = callback;
+    },
+
+    _registerConfigCallbacks: function(adjustConfig) {
+        if (!adjustConfig) {
+            return;
+        }
+
+        var registerIfPresent = function(callbackName, callbackFn) {
+            if (!callbackName) {
+                return;
+            }
+            if (typeof callbackFn === 'function') {
+                Adjust._registerNamedCallback(callbackName, callbackFn);
+                return;
+            }
+            var resolved = Adjust._resolveCallbackByPath(callbackName);
+            if (typeof resolved === 'function') {
+                Adjust._registerNamedCallback(callbackName, resolved);
+            }
+        };
+
+        registerIfPresent(adjustConfig.attributionCallbackName, adjustConfig.attributionCallbackFunction);
+        registerIfPresent(adjustConfig.eventSuccessCallbackName, adjustConfig.eventSuccessCallbackFunction);
+        registerIfPresent(adjustConfig.eventFailureCallbackName, adjustConfig.eventFailureCallbackFunction);
+        registerIfPresent(adjustConfig.sessionSuccessCallbackName, adjustConfig.sessionSuccessCallbackFunction);
+        registerIfPresent(adjustConfig.sessionFailureCallbackName, adjustConfig.sessionFailureCallbackFunction);
+        registerIfPresent(adjustConfig.deferredDeeplinkCallbackName, adjustConfig.deferredDeeplinkCallbackFunction);
+
+        var registerInternal = function(callbackName, callbackFn) {
+            if (!callbackName || typeof callbackFn !== 'function') {
+                return;
+            }
+            if (Adjust._namedCallbackMap[callbackName]) {
+                return;
+            }
+            Adjust._registerNamedCallback(callbackName, callbackFn.bind(adjustConfig));
+        };
+
+        registerInternal(adjustConfig.attributionCallbackName, adjustConfig.adjust_attributionCallback);
+        registerInternal(adjustConfig.eventSuccessCallbackName, adjustConfig.adjust_eventSuccessCallback);
+        registerInternal(adjustConfig.eventFailureCallbackName, adjustConfig.adjust_eventFailureCallback);
+        registerInternal(adjustConfig.sessionSuccessCallbackName, adjustConfig.adjust_sessionSuccessCallback);
+        registerInternal(adjustConfig.sessionFailureCallbackName, adjustConfig.adjust_sessionFailureCallback);
+        registerInternal(adjustConfig.deferredDeeplinkCallbackName, adjustConfig.adjust_deferredDeeplinkCallback);
+    },
+
+    _resolveCallbackByPath: function(path) {
+        if (!path || typeof path !== 'string') {
+            return null;
+        }
+        if (path.indexOf('(') !== -1 || path.indexOf(')') !== -1) {
+            return null;
+        }
+        var parts = path.split('.');
+        var context = window;
+        for (var i = 0; i < parts.length; i++) {
+            if (!context) {
+                return null;
+            }
+            context = context[parts[i]];
+        }
+        return context;
+    },
+
+    _invokeCallback: function(callbackName, callback, value) {
+        if (callbackName && callbackName.indexOf("adjust_getAttribution") !== -1) {
+            if (typeof value === 'string') {
+                callback(JSON.parse(value));
+            } else {
+                callback(value);
+            }
+            return;
+        }
+        callback(value);
+    },
+
+    _nativeCallback: function(callbackName, value) {
+        if (!callbackName) {
+            return;
+        }
+        var getterCallback = this._callbackMap[callbackName];
+        if (getterCallback) {
+            this._invokeCallback(callbackName, getterCallback, value);
+            delete this._callbackMap[callbackName];
+            return;
+        }
+
+        var namedCallback = this._namedCallbackMap[callbackName];
+        if (namedCallback) {
+            this._invokeCallback(callbackName, namedCallback, value);
+        }
+    },
+
+    
 
     initSdk: function (adjustConfig) {
         if (adjustConfig && !adjustConfig.getSdkPrefix()) {
             adjustConfig.setSdkPrefix(this.getSdkPrefix());
         }
         this.adjustConfig = adjustConfig;
+        this._registerConfigCallbacks(adjustConfig);
         if (AdjustBridge) {
             AdjustBridge.initSdk(JSON.stringify(adjustConfig));
         }
@@ -301,5 +372,6 @@ var Adjust = {
         }
         this.adjustConfig = undefined;
         this._callbackMap = {};
+        this._namedCallbackMap = {};
     },
 };
