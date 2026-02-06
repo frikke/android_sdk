@@ -41,8 +41,9 @@ public class AdjustBridgeUtil {
             webView.post(new Runnable() {
                 @Override
                 public void run() {
-                    String command = "javascript:adjust_deeplink('" + deeplink.toString() + "');";
-                    webView.loadUrl(command);
+                    String deeplinkValue = deeplink == null ? "null" : JSONObject.quote(deeplink.toString());
+                    String command = "adjust_deeplink(" + deeplinkValue + ");";
+                    webView.evaluateJavascript(command, null);
                 }
             });
         }
@@ -124,13 +125,9 @@ public class AdjustBridgeUtil {
         webView.post(new Runnable() {
             @Override
             public void run() {
-                if (adid != null ) {
-                    String command = "javascript:" + commandName + "('" + adid + "');";
-                    webView.loadUrl(command);
-                } else {
-                    String command = "javascript:" + commandName + "(null);";
-                    webView.loadUrl(command);
-                }
+                String payload = adid == null ? "null" : JSONObject.quote(adid);
+                String command = commandName + "(" + payload + ");";
+                webView.evaluateJavascript(command, null);
             }
         });
     }
@@ -158,11 +155,11 @@ public class AdjustBridgeUtil {
                         jsonAttribution.put("fbInstallReferrer", attribution.fbInstallReferrer == null ? JSONObject.NULL : attribution.fbInstallReferrer);
                         jsonAttribution.put("jsonResponse", attribution.jsonResponse == null ? JSONObject.NULL : new JSONObject(attribution.jsonResponse));
 
-                        String command = "javascript:" + commandName + "(" + jsonAttribution.toString() + ");";
-                        webView.loadUrl(command);
+                        String command = commandName + "(" + jsonAttribution.toString() + ");";
+                        webView.evaluateJavascript(command, null);
                     } else {
-                        String command = "javascript:" + commandName + "(null);";
-                        webView.loadUrl(command);
+                        String command = commandName + "(null);";
+                        webView.evaluateJavascript(command, null);
                     }
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -189,8 +186,8 @@ public class AdjustBridgeUtil {
                     jsonSessionSuccess.put("timestamp", sessionSuccess.timestamp == null ? JSONObject.NULL : sessionSuccess.timestamp);
                     jsonSessionSuccess.put("jsonResponse", sessionSuccess.jsonResponse == null ? JSONObject.NULL : sessionSuccess.jsonResponse);
 
-                    String command = "javascript:" + commandName + "(" + jsonSessionSuccess.toString() + ");";
-                    webView.loadUrl(command);
+                    String command = commandName + "(" + jsonSessionSuccess.toString() + ");";
+                    webView.evaluateJavascript(command, null);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -217,8 +214,8 @@ public class AdjustBridgeUtil {
                     jsonSessionFailure.put("willRetry", sessionFailure.willRetry ? String.valueOf(true) : String.valueOf(false));
                     jsonSessionFailure.put("jsonResponse", sessionFailure.jsonResponse == null ? JSONObject.NULL : sessionFailure.jsonResponse);
 
-                    String command = "javascript:" + commandName + "(" + jsonSessionFailure.toString() + ");";
-                    webView.loadUrl(command);
+                    String command = commandName + "(" + jsonSessionFailure.toString() + ");";
+                    webView.evaluateJavascript(command, null);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -246,8 +243,8 @@ public class AdjustBridgeUtil {
                     jsonEventSuccess.put("callbackId", eventSuccess.callbackId == null ? JSONObject.NULL : eventSuccess.callbackId);
                     jsonEventSuccess.put("jsonResponse", eventSuccess.jsonResponse == null ? JSONObject.NULL : eventSuccess.jsonResponse);
 
-                    String command = "javascript:" + commandName + "(" + jsonEventSuccess.toString() + ");";
-                    webView.loadUrl(command);
+                    String command = commandName + "(" + jsonEventSuccess.toString() + ");";
+                    webView.evaluateJavascript(command, null);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -276,8 +273,8 @@ public class AdjustBridgeUtil {
                     jsonEventFailure.put("callbackId", eventFailure.callbackId == null ? JSONObject.NULL : eventFailure.callbackId);
                     jsonEventFailure.put("jsonResponse", eventFailure.jsonResponse == null ? JSONObject.NULL : eventFailure.jsonResponse);
 
-                    String command = "javascript:" + commandName + "(" + jsonEventFailure.toString() + ");";
-                    webView.loadUrl(command);
+                    String command = commandName + "(" + jsonEventFailure.toString() + ");";
+                    webView.evaluateJavascript(command, null);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -293,8 +290,9 @@ public class AdjustBridgeUtil {
         webView.post(new Runnable() {
             @Override
             public void run() {
-                String command = "javascript:" + commandName + "('" + value + "');";
-                webView.loadUrl(command);
+                String payload = value == null ? "null" : JSONObject.quote(value);
+                String command = commandName + "(" + payload + ");";
+                webView.evaluateJavascript(command, null);
             }
         });
     }
