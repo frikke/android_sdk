@@ -8,7 +8,10 @@ var Adjust = {
     // map to store callbacks by their unique callback ID
     _callbackMap: {},
     _namedCallbackMap: {},
-    
+    _bridgeToken: null,
+    _bridgeTokenRequested: false,
+    _pendingBridgeCalls: [],
+
     _handleGetterCallback: function(callback, callbackId) {
         this._callbackMap[callbackId] = callback;
     },
@@ -111,7 +114,39 @@ var Adjust = {
         }
     },
 
-    
+    _setBridgeToken: function(token) {
+        this._bridgeToken = token;
+        this._bridgeTokenRequested = false;
+        if (!this._pendingBridgeCalls.length) {
+            return;
+        }
+        var pending = this._pendingBridgeCalls;
+        this._pendingBridgeCalls = [];
+        for (var i = 0; i < pending.length; i++) {
+            var entry = pending[i];
+            this._callBridge(entry.method, entry.args);
+        }
+    },
+
+    _callBridge: function(method, args) {
+        if (!AdjustBridge) {
+            return undefined;
+        }
+        if (window.top !== window.self) {
+            return undefined;
+        }
+        var callArgs = args ? args.slice() : [];
+        if (!this._bridgeToken) {
+            if (!this._bridgeTokenRequested && typeof AdjustBridge.requestBridgeToken === 'function') {
+                this._bridgeTokenRequested = true;
+                AdjustBridge.requestBridgeToken();
+            }
+            this._pendingBridgeCalls.push({ method: method, args: callArgs });
+            return undefined;
+        }
+        callArgs.push(this._bridgeToken);
+        return AdjustBridge[method].apply(AdjustBridge, callArgs);
+    },
 
     initSdk: function (adjustConfig) {
         if (adjustConfig && !adjustConfig.getSdkPrefix()) {
@@ -129,33 +164,23 @@ var Adjust = {
     },
 
     trackEvent: function (adjustEvent) {
-        if (AdjustBridge) {
-            AdjustBridge.trackEvent(JSON.stringify(adjustEvent));
-        }
+        this._callBridge('trackEvent', [JSON.stringify(adjustEvent)]);
     },
 
     onResume: function () {
-        if (AdjustBridge) {
-            AdjustBridge.onResume();
-        }
+        this._callBridge('onResume');
     },
 
     onPause: function () {
-        if (AdjustBridge) {
-            AdjustBridge.onPause();
-        }
+        this._callBridge('onPause');
     },
 
     enable: function () {
-        if (AdjustBridge) {
-            AdjustBridge.enable();
-        }
+        this._callBridge('enable');
     },
 
     disable: function () {
-        if (AdjustBridge) {
-            AdjustBridge.disable();
-        }
+        this._callBridge('disable');
     },
 
     isEnabled: function (callback) {
@@ -167,28 +192,22 @@ var Adjust = {
             // generate unique callback ID
             const callbackId = window.randomCallbackIdWithPrefix("adjust_isEnabled");
             this._handleGetterCallback(callback, callbackId);
-            AdjustBridge.isEnabled(callbackId);
+            this._callBridge('isEnabled', [callbackId]);
         } else {
             return AdjustBridge.isEnabled();
         }
     },
 
     setReferrer: function (referrer) {
-        if (AdjustBridge) {
-            AdjustBridge.setReferrer(referrer);
-        }
+        this._callBridge('setReferrer', [referrer]);
     },
 
     switchToOfflineMode: function() {
-        if (AdjustBridge) {
-            AdjustBridge.switchToOfflineMode();
-        }
+        this._callBridge('switchToOfflineMode');
     },
 
     switchBackToOnlineMode: function() {
-        if (AdjustBridge) {
-            AdjustBridge.switchBackToOnlineMode();
-        }
+        this._callBridge('switchBackToOnlineMode');
     },
 
     addGlobalCallbackParameter: function(key, value) {
@@ -197,7 +216,7 @@ var Adjust = {
                 console.log('[Adjust]: Passed key or value is not of string type');
                 return;
             }
-            AdjustBridge.addGlobalCallbackParameter(key, value);
+            this._callBridge('addGlobalCallbackParameter', [key, value]);
         }
     },
 
@@ -207,7 +226,7 @@ var Adjust = {
                 console.log('[Adjust]: Passed key or value is not of string type');
                 return;
             }
-            AdjustBridge.addGlobalPartnerParameter(key, value);
+            this._callBridge('addGlobalPartnerParameter', [key, value]);
         }
     },
 
@@ -217,7 +236,7 @@ var Adjust = {
                 console.log('[Adjust]: Passed key is not of string type');
                 return;
             }
-            AdjustBridge.removeGlobalCallbackParameter(key);
+            this._callBridge('removeGlobalCallbackParameter', [key]);
         }
     },
 
@@ -227,81 +246,59 @@ var Adjust = {
                 console.log('[Adjust]: Passed key is not of string type');
                 return;
             }
-            AdjustBridge.removeGlobalPartnerParameter(key);
+            this._callBridge('removeGlobalPartnerParameter', [key]);
         }
     },
 
     removeGlobalCallbackParameters: function() {
-        if (AdjustBridge) {
-            AdjustBridge.removeGlobalCallbackParameters();
-        }
+        this._callBridge('removeGlobalCallbackParameters');
     },
 
     removeGlobalPartnerParameters: function() {
-        if (AdjustBridge) {
-            AdjustBridge.removeGlobalPartnerParameters();
-        }
+        this._callBridge('removeGlobalPartnerParameters');
     },
 
     gdprForgetMe: function() {
-        if (AdjustBridge) {
-            AdjustBridge.gdprForgetMe();
-        }
+        this._callBridge('gdprForgetMe');
     },
 
     trackThirdPartySharing: function(adjustThirdPartySharing) {
-        if (AdjustBridge) {
-            AdjustBridge.trackThirdPartySharing(JSON.stringify(adjustThirdPartySharing));
-        }
+        this._callBridge('trackThirdPartySharing', [JSON.stringify(adjustThirdPartySharing)]);
     },
 
     trackMeasurementConsent: function(consentMeasurement) {
-        if (AdjustBridge) {
-            AdjustBridge.trackMeasurementConsent(consentMeasurement);
-        }
+        this._callBridge('trackMeasurementConsent', [consentMeasurement]);
     },
 
     endFirstSessionDelay: function() {
-        if (AdjustBridge) {
-            AdjustBridge.endFirstSessionDelay();
-        }
+        this._callBridge('endFirstSessionDelay');
     },
 
     enableCoppaComplianceInDelay: function() {
-        if (AdjustBridge) {
-            AdjustBridge.enableCoppaComplianceInDelay();
-        }
+        this._callBridge('enableCoppaComplianceInDelay');
     },
 
     disableCoppaComplianceInDelay: function() {
-        if (AdjustBridge) {
-            AdjustBridge.disableCoppaComplianceInDelay();
-        }
+        this._callBridge('disableCoppaComplianceInDelay');
     },
 
     enablePlayStoreKidsComplianceInDelay: function() {
-        if (AdjustBridge) {
-            AdjustBridge.enablePlayStoreKidsComplianceInDelay();
-        }
+        this._callBridge('enablePlayStoreKidsComplianceInDelay');
     },
 
     disablePlayStoreKidsComplianceInDelay: function() {
-        if (AdjustBridge) {
-            AdjustBridge.disablePlayStoreKidsComplianceInDelay();
-        }
+        this._callBridge('disablePlayStoreKidsComplianceInDelay');
     },
 
     setExternalDeviceIdInDelay: function(externalDeviceId) {
-        if (AdjustBridge) {
-            AdjustBridge.setExternalDeviceIdInDelay(externalDeviceId);
-        }
+        this._callBridge('setExternalDeviceIdInDelay', [externalDeviceId]);
     },
 
     getGoogleAdId: function (callback) {
         if (AdjustBridge) {
             const callbackId = window.randomCallbackIdWithPrefix("adjust_getGoogleAdId");
             this._handleGetterCallback(callback, callbackId);
-            AdjustBridge.getGoogleAdId(callbackId);
+            this._callBridge('getGoogleAdId', [callbackId]);
         }
     },
 
@@ -309,7 +306,7 @@ var Adjust = {
         if (AdjustBridge) {
             const callbackId = window.randomCallbackIdWithPrefix("adjust_getAdid");
             this._handleGetterCallback(callback, callbackId);
-            AdjustBridge.getAdid(callbackId);
+            this._callBridge('getAdid', [callbackId]);
         }
     },
 
@@ -317,7 +314,7 @@ var Adjust = {
         if (AdjustBridge) {
             const callbackId = window.randomCallbackIdWithPrefix("adjust_getAdidWithTimeout");
             this._handleGetterCallback(callback, callbackId);
-            AdjustBridge.getAdidWithTimeout(timeoutInMilliSec, callbackId);
+            this._callBridge('getAdidWithTimeout', [timeoutInMilliSec, callbackId]);
         }
     },
 
@@ -326,7 +323,7 @@ var Adjust = {
             const callbackId = window.randomCallbackIdWithPrefix("adjust_getAmazonAdId");
             this._handleGetterCallback(callbackSuccess, callbackId);
             // note: Java side only supports success callback, callbackFail is ignored
-            AdjustBridge.getAmazonAdId(callbackId);
+            this._callBridge('getAmazonAdId', [callbackId]);
         }
     },
 
@@ -334,7 +331,7 @@ var Adjust = {
         if (AdjustBridge) {
             const callbackId = window.randomCallbackIdWithPrefix("adjust_getAttribution");
             this._handleGetterCallback(callback, callbackId);
-            AdjustBridge.getAttribution(callbackId);
+            this._callBridge('getAttribution', [callbackId]);
         }
     },
 
@@ -342,7 +339,7 @@ var Adjust = {
         if (AdjustBridge) {
             const callbackId = window.randomCallbackIdWithPrefix("adjust_getAttributionWithTimeout");
             this._handleGetterCallback(callback, callbackId);
-            AdjustBridge.getAttributionWithTimeout(timeoutInMilliSec, callbackId);
+            this._callBridge('getAttributionWithTimeout', [timeoutInMilliSec, callbackId]);
         }
     },
 
@@ -354,7 +351,7 @@ var Adjust = {
                 callback(Adjust.getSdkPrefix() + '@' + sdkVersion);
             };
             this._handleGetterCallback(wrappedCallback, callbackId);
-            AdjustBridge.getSdkVersion(callbackId);
+            this._callBridge('getSdkVersion', [callbackId]);
         }
     },
 
@@ -368,10 +365,13 @@ var Adjust = {
 
     teardown: function() {
         if (AdjustBridge) {
-            AdjustBridge.teardown();
+            this._callBridge('teardown');
         }
         this.adjustConfig = undefined;
         this._callbackMap = {};
         this._namedCallbackMap = {};
+        this._bridgeToken = null;
+        this._bridgeTokenRequested = false;
+        this._pendingBridgeCalls = [];
     },
 };
