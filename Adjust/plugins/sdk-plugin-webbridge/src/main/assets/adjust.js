@@ -154,9 +154,7 @@ var Adjust = {
         }
         this.adjustConfig = adjustConfig;
         this._registerConfigCallbacks(adjustConfig);
-        if (AdjustBridge) {
-            AdjustBridge.initSdk(JSON.stringify(adjustConfig));
-        }
+        this._callBridge('initSdk', [JSON.stringify(adjustConfig)]);
     },
 
     getConfig: function () {

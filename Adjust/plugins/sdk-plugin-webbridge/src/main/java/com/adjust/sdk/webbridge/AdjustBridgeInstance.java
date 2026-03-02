@@ -131,6 +131,14 @@ public class AdjustBridgeInstance {
 
     @JavascriptInterface
     public void initSdk(String adjustConfigString) {
+        initSdk(adjustConfigString, null);
+    }
+
+    @JavascriptInterface
+    public void initSdk(String adjustConfigString, String bridgeToken) {
+        if (!isBridgeAuthorized(bridgeToken)) {
+            return;
+        }
         // Initialise SDK only if it's not already initialised.
         if (isInitialized) {
             AdjustBridgeUtil.getLogger().warn("Adjust bridge is already initialized. Ignoring further attempts");
