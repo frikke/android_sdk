@@ -10,7 +10,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class ObjectInputFilterStream extends ObjectInputStream {
-    private static final Set<String> ALLOWED_CLASSES = new HashSet<>(Arrays.asList(
+    static final Set<String> ALLOWED_CLASSES = new HashSet<>(Arrays.asList(
             "java.lang.Boolean",
             "java.lang.Double",
             "java.lang.Enum",

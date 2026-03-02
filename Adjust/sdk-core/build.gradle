@@ -50,6 +50,7 @@ dependencies {
      *  for any downstream users of your library.
      */
     implementation 'androidx.annotation:annotation:1.8.0'
+    testImplementation 'junit:junit:4.13.2'
 }
 
 task adjustCoreAarRelease(type: Copy) {
