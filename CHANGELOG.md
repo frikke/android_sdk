@@ -1,6 +1,6 @@
 ### Version 5.5.1 (4th March 2026)
 #### Fixed
-- Improved WebBridge input validation to address a potential UXSS risk.
+- Improved web bridge input validation to address a potential UXSS risk.
 - Hardened object deserialization handling for improved security.
 
 ---
