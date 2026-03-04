@@ -161,7 +161,7 @@ public class ObjectInputFilterStreamPersistedTest {
     public void roundTrip_activityPackage() throws Exception {
         ActivityPackage original = new ActivityPackage(ActivityKind.EVENT);
         original.setPath("/event");
-        original.setClientSdk("android5.5.0");
+        original.setClientSdk("android5.5.1");
         Map<String, String> parameters = new LinkedHashMap<>();
         parameters.put("k1", "v1");
         parameters.put("k2", "v2");
@@ -197,7 +197,7 @@ public class ObjectInputFilterStreamPersistedTest {
     public void roundTrip_packageQueue() throws Exception {
         ActivityPackage first = new ActivityPackage(ActivityKind.SESSION);
         first.setPath("/session");
-        first.setClientSdk("android5.5.0");
+        first.setClientSdk("android5.5.1");
         Map<String, String> firstParams = new LinkedHashMap<>();
         firstParams.put("k1", "v1");
         firstParams.put("k2", "v2");
@@ -215,7 +215,7 @@ public class ObjectInputFilterStreamPersistedTest {
 
         ActivityPackage second = new ActivityPackage(ActivityKind.EVENT);
         second.setPath("/event");
-        second.setClientSdk("android5.5.0");
+        second.setClientSdk("android5.5.1");
         Map<String, String> secondParams = new LinkedHashMap<>();
         secondParams.put("k2", "v2");
         secondParams.put("k3", "v3");
