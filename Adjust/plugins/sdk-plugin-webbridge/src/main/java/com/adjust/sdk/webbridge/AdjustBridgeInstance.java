@@ -2,6 +2,7 @@ package com.adjust.sdk.webbridge;
 
 import android.net.Uri;
 import android.os.Build;
+import android.util.Base64;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebView;
 import android.app.Application;
@@ -34,6 +35,7 @@ import com.adjust.sdk.OnSessionTrackingSucceededListener;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.security.SecureRandom;
 import java.util.Arrays;
 import java.util.List;
 
@@ -59,6 +61,8 @@ public class AdjustBridgeInstance {
     private FacebookSDKJSInterface facebookSDKJSInterface = null;
 
     private String adjustSdkPrefix = null;
+    private boolean isBridgeSecurityEnabled = false;
+    private String bridgeSecurityToken = null;
 
     AdjustBridgeInstance() {}
 
@@ -77,6 +81,32 @@ public class AdjustBridgeInstance {
             return false;
         }
         return true;
+    }
+
+    private boolean isBridgeAuthorized(String token) {
+        if (!isBridgeSecurityEnabled) {
+            return true;
+        }
+        if (bridgeSecurityToken == null) {
+            return false;
+        }
+        return bridgeSecurityToken.equals(token);
+    }
+
+    private void enableBridgeSecurity() {
+        if (!isBridgeSecurityEnabled) {
+            isBridgeSecurityEnabled = true;
+        }
+        if (bridgeSecurityToken == null) {
+            bridgeSecurityToken = generateBridgeToken();
+        }
+        AdjustBridgeUtil.sendBridgeTokenToWebView(webView, bridgeSecurityToken);
+    }
+
+    private String generateBridgeToken() {
+        byte[] tokenBytes = new byte[16];
+        new SecureRandom().nextBytes(tokenBytes);
+        return Base64.encodeToString(tokenBytes, Base64.NO_WRAP);
     }
 
     public void registerFacebookSDKJSInterface() {
@@ -101,6 +131,14 @@ public class AdjustBridgeInstance {
 
     @JavascriptInterface
     public void initSdk(String adjustConfigString) {
+        initSdk(adjustConfigString, null);
+    }
+
+    @JavascriptInterface
+    public void initSdk(String adjustConfigString, String bridgeToken) {
+        if (!isBridgeAuthorized(bridgeToken)) {
+            return;
+        }
         // Initialise SDK only if it's not already initialised.
         if (isInitialized) {
             AdjustBridgeUtil.getLogger().warn("Adjust bridge is already initialized. Ignoring further attempts");
@@ -407,6 +445,8 @@ public class AdjustBridgeInstance {
                 }
             }
 
+            enableBridgeSecurity();
+
             Adjust.initSdk(adjustConfig);
 
             isInitialized = true;
@@ -417,7 +457,23 @@ public class AdjustBridgeInstance {
     }
 
     @JavascriptInterface
+    public void requestBridgeToken() {
+        if (webView == null) {
+            return;
+        }
+        enableBridgeSecurity();
+    }
+
+    @JavascriptInterface
     public void trackEvent(String adjustEventString) {
+        trackEvent(adjustEventString, null);
+    }
+
+    @JavascriptInterface
+    public void trackEvent(String adjustEventString, String bridgeToken) {
+        if (!isBridgeAuthorized(bridgeToken)) {
+            return;
+        }
         if (!isInitialized()) {
             return;
         }
@@ -489,6 +545,14 @@ public class AdjustBridgeInstance {
 
     @JavascriptInterface
     public void onResume() {
+        onResume(null);
+    }
+
+    @JavascriptInterface
+    public void onResume(String bridgeToken) {
+        if (!isBridgeAuthorized(bridgeToken)) {
+            return;
+        }
         if (!isInitialized()) {
             return;
         }
@@ -497,6 +561,14 @@ public class AdjustBridgeInstance {
 
     @JavascriptInterface
     public void onPause() {
+        onPause(null);
+    }
+
+    @JavascriptInterface
+    public void onPause(String bridgeToken) {
+        if (!isBridgeAuthorized(bridgeToken)) {
+            return;
+        }
         if (!isInitialized()) {
             return;
         }
@@ -505,6 +577,14 @@ public class AdjustBridgeInstance {
 
     @JavascriptInterface
     public void enable() {
+        enable(null);
+    }
+
+    @JavascriptInterface
+    public void enable(String bridgeToken) {
+        if (!isBridgeAuthorized(bridgeToken)) {
+            return;
+        }
         if (!isInitialized()) {
             return;
         }
@@ -513,6 +593,14 @@ public class AdjustBridgeInstance {
 
     @JavascriptInterface
     public void disable() {
+        disable(null);
+    }
+
+    @JavascriptInterface
+    public void disable(String bridgeToken) {
+        if (!isBridgeAuthorized(bridgeToken)) {
+            return;
+        }
         if (!isInitialized()) {
             return;
         }
@@ -521,6 +609,14 @@ public class AdjustBridgeInstance {
 
     @JavascriptInterface
     public void isEnabled(String callback) {
+        isEnabled(callback, null);
+    }
+
+    @JavascriptInterface
+    public void isEnabled(String callback, String bridgeToken) {
+        if (!isBridgeAuthorized(bridgeToken)) {
+            return;
+        }
         if (!isInitialized()) {
             return;
         }
@@ -534,6 +630,14 @@ public class AdjustBridgeInstance {
 
     @JavascriptInterface
     public void setReferrer(String referrer) {
+        setReferrer(referrer, null);
+    }
+
+    @JavascriptInterface
+    public void setReferrer(String referrer, String bridgeToken) {
+        if (!isBridgeAuthorized(bridgeToken)) {
+            return;
+        }
         if (!isInitialized()) {
             return;
         }
@@ -542,6 +646,14 @@ public class AdjustBridgeInstance {
 
     @JavascriptInterface
     public void switchToOfflineMode() {
+        switchToOfflineMode(null);
+    }
+
+    @JavascriptInterface
+    public void switchToOfflineMode(String bridgeToken) {
+        if (!isBridgeAuthorized(bridgeToken)) {
+            return;
+        }
         if (!isInitialized()) {
             return;
         }
@@ -550,6 +662,14 @@ public class AdjustBridgeInstance {
 
     @JavascriptInterface
     public void switchBackToOnlineMode() {
+        switchBackToOnlineMode(null);
+    }
+
+    @JavascriptInterface
+    public void switchBackToOnlineMode(String bridgeToken) {
+        if (!isBridgeAuthorized(bridgeToken)) {
+            return;
+        }
         if (!isInitialized()) {
             return;
         }
@@ -558,6 +678,14 @@ public class AdjustBridgeInstance {
 
     @JavascriptInterface
     public void addGlobalCallbackParameter(String key, String value) {
+        addGlobalCallbackParameter(key, value, null);
+    }
+
+    @JavascriptInterface
+    public void addGlobalCallbackParameter(String key, String value, String bridgeToken) {
+        if (!isBridgeAuthorized(bridgeToken)) {
+            return;
+        }
         if (!isInitialized()) {
             return;
         }
@@ -566,6 +694,14 @@ public class AdjustBridgeInstance {
 
     @JavascriptInterface
     public void addGlobalPartnerParameter(String key, String value) {
+        addGlobalPartnerParameter(key, value, null);
+    }
+
+    @JavascriptInterface
+    public void addGlobalPartnerParameter(String key, String value, String bridgeToken) {
+        if (!isBridgeAuthorized(bridgeToken)) {
+            return;
+        }
         if (!isInitialized()) {
             return;
         }
@@ -574,6 +710,14 @@ public class AdjustBridgeInstance {
 
     @JavascriptInterface
     public void removeGlobalCallbackParameter(String key) {
+        removeGlobalCallbackParameter(key, null);
+    }
+
+    @JavascriptInterface
+    public void removeGlobalCallbackParameter(String key, String bridgeToken) {
+        if (!isBridgeAuthorized(bridgeToken)) {
+            return;
+        }
         if (!isInitialized()) {
             return;
         }
@@ -582,6 +726,14 @@ public class AdjustBridgeInstance {
 
     @JavascriptInterface
     public void removeGlobalPartnerParameter(String key) {
+        removeGlobalPartnerParameter(key, null);
+    }
+
+    @JavascriptInterface
+    public void removeGlobalPartnerParameter(String key, String bridgeToken) {
+        if (!isBridgeAuthorized(bridgeToken)) {
+            return;
+        }
         if (!isInitialized()) {
             return;
         }
@@ -590,6 +742,14 @@ public class AdjustBridgeInstance {
 
     @JavascriptInterface
     public void removeGlobalCallbackParameters() {
+        removeGlobalCallbackParameters(null);
+    }
+
+    @JavascriptInterface
+    public void removeGlobalCallbackParameters(String bridgeToken) {
+        if (!isBridgeAuthorized(bridgeToken)) {
+            return;
+        }
         if (!isInitialized()) {
             return;
         }
@@ -598,6 +758,14 @@ public class AdjustBridgeInstance {
 
     @JavascriptInterface
     public void removeGlobalPartnerParameters() {
+        removeGlobalPartnerParameters(null);
+    }
+
+    @JavascriptInterface
+    public void removeGlobalPartnerParameters(String bridgeToken) {
+        if (!isBridgeAuthorized(bridgeToken)) {
+            return;
+        }
         if (!isInitialized()) {
             return;
         }
@@ -606,6 +774,14 @@ public class AdjustBridgeInstance {
 
     @JavascriptInterface
     public void gdprForgetMe() {
+        gdprForgetMe(null);
+    }
+
+    @JavascriptInterface
+    public void gdprForgetMe(String bridgeToken) {
+        if (!isBridgeAuthorized(bridgeToken)) {
+            return;
+        }
         if (!isInitialized()) {
             return;
         }
@@ -614,6 +790,14 @@ public class AdjustBridgeInstance {
 
     @JavascriptInterface
     public void trackThirdPartySharing(String adjustThirdPartySharingString) {
+        trackThirdPartySharing(adjustThirdPartySharingString, null);
+    }
+
+    @JavascriptInterface
+    public void trackThirdPartySharing(String adjustThirdPartySharingString, String bridgeToken) {
+        if (!isBridgeAuthorized(bridgeToken)) {
+            return;
+        }
         if (!isInitialized()) {
             return;
         }
@@ -669,6 +853,14 @@ public class AdjustBridgeInstance {
 
     @JavascriptInterface
     public void trackMeasurementConsent(String consentMeasurementString) {
+        trackMeasurementConsent(consentMeasurementString, null);
+    }
+
+    @JavascriptInterface
+    public void trackMeasurementConsent(String consentMeasurementString, String bridgeToken) {
+        if (!isBridgeAuthorized(bridgeToken)) {
+            return;
+        }
         if (!isInitialized()) {
             return;
         }
@@ -680,6 +872,14 @@ public class AdjustBridgeInstance {
 
     @JavascriptInterface
     public void endFirstSessionDelay() {
+        endFirstSessionDelay(null);
+    }
+
+    @JavascriptInterface
+    public void endFirstSessionDelay(String bridgeToken) {
+        if (!isBridgeAuthorized(bridgeToken)) {
+            return;
+        }
         if (!isInitialized()) {
             return;
         }
@@ -688,6 +888,14 @@ public class AdjustBridgeInstance {
 
     @JavascriptInterface
     public void enableCoppaComplianceInDelay() {
+        enableCoppaComplianceInDelay(null);
+    }
+
+    @JavascriptInterface
+    public void enableCoppaComplianceInDelay(String bridgeToken) {
+        if (!isBridgeAuthorized(bridgeToken)) {
+            return;
+        }
         if (!isInitialized()) {
             return;
         }
@@ -696,6 +904,14 @@ public class AdjustBridgeInstance {
 
     @JavascriptInterface
     public void disableCoppaComplianceInDelay() {
+        disableCoppaComplianceInDelay(null);
+    }
+
+    @JavascriptInterface
+    public void disableCoppaComplianceInDelay(String bridgeToken) {
+        if (!isBridgeAuthorized(bridgeToken)) {
+            return;
+        }
         if (!isInitialized()) {
             return;
         }
@@ -704,6 +920,14 @@ public class AdjustBridgeInstance {
 
     @JavascriptInterface
     public void enablePlayStoreKidsComplianceInDelay() {
+        enablePlayStoreKidsComplianceInDelay(null);
+    }
+
+    @JavascriptInterface
+    public void enablePlayStoreKidsComplianceInDelay(String bridgeToken) {
+        if (!isBridgeAuthorized(bridgeToken)) {
+            return;
+        }
         if (!isInitialized()) {
             return;
         }
@@ -712,6 +936,14 @@ public class AdjustBridgeInstance {
 
     @JavascriptInterface
     public void disablePlayStoreKidsComplianceInDelay() {
+        disablePlayStoreKidsComplianceInDelay(null);
+    }
+
+    @JavascriptInterface
+    public void disablePlayStoreKidsComplianceInDelay(String bridgeToken) {
+        if (!isBridgeAuthorized(bridgeToken)) {
+            return;
+        }
         if (!isInitialized()) {
             return;
         }
@@ -720,6 +952,14 @@ public class AdjustBridgeInstance {
 
     @JavascriptInterface
     public void setExternalDeviceIdInDelay(String externalDeviceId) {
+        setExternalDeviceIdInDelay(externalDeviceId, null);
+    }
+
+    @JavascriptInterface
+    public void setExternalDeviceIdInDelay(String externalDeviceId, String bridgeToken) {
+        if (!isBridgeAuthorized(bridgeToken)) {
+            return;
+        }
         if (!isInitialized()) {
             return;
         }
@@ -728,6 +968,14 @@ public class AdjustBridgeInstance {
 
     @JavascriptInterface
     public void getGoogleAdId(final String callback) {
+        getGoogleAdId(callback, null);
+    }
+
+    @JavascriptInterface
+    public void getGoogleAdId(final String callback, String bridgeToken) {
+        if (!isBridgeAuthorized(bridgeToken)) {
+            return;
+        }
         if (!isInitialized()) {
             return;
         }
@@ -741,6 +989,14 @@ public class AdjustBridgeInstance {
 
     @JavascriptInterface
     public void getAmazonAdId(final String callbackSuccess) {
+        getAmazonAdId(callbackSuccess, null);
+    }
+
+    @JavascriptInterface
+    public void getAmazonAdId(final String callbackSuccess, String bridgeToken) {
+        if (!isBridgeAuthorized(bridgeToken)) {
+            return;
+        }
         if (!isInitialized()) {
             return;
         }
@@ -754,6 +1010,14 @@ public class AdjustBridgeInstance {
 
     @JavascriptInterface
     public void getAdid(final String callback) {
+        getAdid(callback, null);
+    }
+
+    @JavascriptInterface
+    public void getAdid(final String callback, String bridgeToken) {
+        if (!isBridgeAuthorized(bridgeToken)) {
+            return;
+        }
         if (!isInitialized()) {
             return;
         }
@@ -767,6 +1031,14 @@ public class AdjustBridgeInstance {
 
     @JavascriptInterface
     public void getAdidWithTimeout(final long timeoutInMilliSec, final String callback) {
+        getAdidWithTimeout(timeoutInMilliSec, callback, null);
+    }
+
+    @JavascriptInterface
+    public void getAdidWithTimeout(final long timeoutInMilliSec, final String callback, String bridgeToken) {
+        if (!isBridgeAuthorized(bridgeToken)) {
+            return;
+        }
         if (!isInitialized()) {
             return;
         }
@@ -781,6 +1053,14 @@ public class AdjustBridgeInstance {
 
     @JavascriptInterface
     public void getAttribution(final String callback) {
+        getAttribution(callback, null);
+    }
+
+    @JavascriptInterface
+    public void getAttribution(final String callback, String bridgeToken) {
+        if (!isBridgeAuthorized(bridgeToken)) {
+            return;
+        }
         if (!isInitialized()) {
             return;
         }
@@ -795,6 +1075,14 @@ public class AdjustBridgeInstance {
 
     @JavascriptInterface
     public void getAttributionWithTimeout(final long timeoutInMilliSec, final String callback) {
+        getAttributionWithTimeout(timeoutInMilliSec, callback, null);
+    }
+
+    @JavascriptInterface
+    public void getAttributionWithTimeout(final long timeoutInMilliSec, final String callback, String bridgeToken) {
+        if (!isBridgeAuthorized(bridgeToken)) {
+            return;
+        }
         if (!isInitialized()) {
             return;
         }
@@ -809,6 +1097,14 @@ public class AdjustBridgeInstance {
 
     @JavascriptInterface
     public void getSdkVersion(final String callback) {
+        getSdkVersion(callback, null);
+    }
+
+    @JavascriptInterface
+    public void getSdkVersion(final String callback, String bridgeToken) {
+        if (!isBridgeAuthorized(bridgeToken)) {
+            return;
+        }
         if (!isInitialized()) {
             return;
         }
@@ -822,13 +1118,31 @@ public class AdjustBridgeInstance {
 
     @JavascriptInterface
     public void fbPixelEvent(String pixelId, String event_name, String jsonString) {
+        fbPixelEvent(pixelId, event_name, jsonString, null);
+    }
+
+    @JavascriptInterface
+    public void fbPixelEvent(String pixelId, String event_name, String jsonString, String bridgeToken) {
+        if (!isBridgeAuthorized(bridgeToken)) {
+            return;
+        }
         this.facebookSDKJSInterface.sendEvent(pixelId, event_name, jsonString);
     }
 
     @JavascriptInterface
     public void teardown() {
+        teardown(null);
+    }
+
+    @JavascriptInterface
+    public void teardown(String bridgeToken) {
+        if (!isBridgeAuthorized(bridgeToken)) {
+            return;
+        }
         isInitialized = false;
         isOpeningDeferredDeeplinkEnabled = true;
+        isBridgeSecurityEnabled = false;
+        bridgeSecurityToken = null;
     }
 
     public void setWebView(WebView webView) {
@@ -836,6 +1150,7 @@ public class AdjustBridgeInstance {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
             webView.addJavascriptInterface(this, JAVASCRIPT_INTERFACE_NAME);
         }
+        enableBridgeSecurity();
     }
 
     public void setApplicationContext(Application application) {
@@ -855,6 +1170,8 @@ public class AdjustBridgeInstance {
         application = null;
         webView = null;
         isInitialized = false;
+        isBridgeSecurityEnabled = false;
+        bridgeSecurityToken = null;
     }
 
     public void unregisterFacebookSDKJSInterface() {
