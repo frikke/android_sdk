@@ -1,3 +1,10 @@
+### Version 5.5.1 (4th March 2026)
+#### Fixed
+- Improved WebBridge input validation to address a potential UXSS risk.
+- Hardened object deserialization handling for improved security.
+
+---
+
 ### Version 5.5.0 (5th December 2025)
 #### Added
 - Added `getAdidWithTimeout` method to the `Adjust` API to allow retrieving the ADID with a specified timeout. If the value is not obtained in time, null is returned.
