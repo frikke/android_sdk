@@ -1265,6 +1265,10 @@ public class PackageBuilder {
         if (!adjustConfig.isAppSetIdReadingEnabled) {
             PackageBuilder.addBoolean(parameters, "ff_app_set_id_disabled", true);
         }
+
+        if (adjustConfig.onRemoteTriggerListener != null) {
+            PackageBuilder.addBoolean(parameters, "ff_remote_triggers_callback", true);
+        }
     }
 
     private void injectStoreInfoToParameters(Map<String, String> parameters) {
