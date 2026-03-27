@@ -2064,6 +2064,9 @@ public class ActivityHandler
     }
 
     private void launchAttributionResponseTasksI(AttributionResponseData attributionResponseData) {
+        // process remote triggers from any response
+        processRemoteTriggersI(attributionResponseData);
+
         // try to update adid from response
         updateAdidI(attributionResponseData.adid);
 
