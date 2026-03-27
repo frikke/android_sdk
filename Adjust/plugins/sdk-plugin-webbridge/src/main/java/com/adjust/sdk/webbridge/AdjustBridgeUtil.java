@@ -232,21 +232,15 @@ public class AdjustBridgeUtil {
             return;
         }
 
-        webView.post(new Runnable() {
-            @Override
-            public void run() {
-                JSONObject jsonRemoteTrigger = new JSONObject();
-                try {
-                    jsonRemoteTrigger.put("label", remoteTrigger.getLabel() == null ? JSONObject.NULL : remoteTrigger.getLabel());
-                    jsonRemoteTrigger.put("payload", remoteTrigger.getPayload() == null ? JSONObject.NULL : remoteTrigger.getPayload());
+        JSONObject jsonRemoteTrigger = new JSONObject();
+        try {
+            jsonRemoteTrigger.put("label", remoteTrigger.getLabel() == null ? JSONObject.NULL : remoteTrigger.getLabel());
+            jsonRemoteTrigger.put("payload", remoteTrigger.getPayload() == null ? JSONObject.NULL : remoteTrigger.getPayload());
 
-                    String command = "javascript:" + commandName + "(" + jsonRemoteTrigger.toString() + ");";
-                    webView.loadUrl(command);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-        });
+            execNativeCallback(webView, commandName, jsonRemoteTrigger.toString());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     public static void execSingleValueCallback(final WebView webView, final String commandName, final String value) {
