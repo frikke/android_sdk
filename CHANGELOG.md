@@ -1,3 +1,9 @@
+### Version 5.6.0 (30th March 2026)
+#### Added 
+- Added `setOnRemoteTriggerListener` method to `AdjustConfig` to allow receiving remote trigger updates sent by Adjust backend.
+
+---
+
 ### Version 5.5.1 (4th March 2026)
 #### Fixed
 - Improved web bridge input validation to address a potential UXSS risk.
