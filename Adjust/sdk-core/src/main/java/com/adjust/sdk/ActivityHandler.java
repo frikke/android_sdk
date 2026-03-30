@@ -2140,10 +2140,6 @@ public class ActivityHandler
     }
 
     private void processRemoteTriggersI(ResponseData responseData) {
-        if (!isEnabledI()) {
-            return;
-        }
-
         // process remote triggers independently from other response processing
         if (responseData.jsonResponse == null) {
             return;
