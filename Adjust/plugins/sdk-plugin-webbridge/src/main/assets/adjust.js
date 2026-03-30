@@ -48,6 +48,7 @@ var Adjust = {
         registerIfPresent(adjustConfig.sessionSuccessCallbackName, adjustConfig.sessionSuccessCallbackFunction);
         registerIfPresent(adjustConfig.sessionFailureCallbackName, adjustConfig.sessionFailureCallbackFunction);
         registerIfPresent(adjustConfig.deferredDeeplinkCallbackName, adjustConfig.deferredDeeplinkCallbackFunction);
+        registerIfPresent(adjustConfig.remoteTriggerCallbackName, adjustConfig.remoteTriggerCallbackFunction);
 
         var registerInternal = function(callbackName, callbackFn) {
             if (!callbackName || typeof callbackFn !== 'function') {
@@ -65,6 +66,7 @@ var Adjust = {
         registerInternal(adjustConfig.sessionSuccessCallbackName, adjustConfig.adjust_sessionSuccessCallback);
         registerInternal(adjustConfig.sessionFailureCallbackName, adjustConfig.adjust_sessionFailureCallback);
         registerInternal(adjustConfig.deferredDeeplinkCallbackName, adjustConfig.adjust_deferredDeeplinkCallback);
+        registerInternal(adjustConfig.remoteTriggerCallbackName, adjustConfig.adjust_remoteTriggerCallback);
     },
 
     _resolveCallbackByPath: function(path) {
@@ -357,7 +359,7 @@ var Adjust = {
         if (this.adjustConfig) {
             return this.adjustConfig.getSdkPrefix();
         } else {
-            return 'web-bridge5.5.1';
+            return 'web-bridge5.6.0';
         }
     },
 

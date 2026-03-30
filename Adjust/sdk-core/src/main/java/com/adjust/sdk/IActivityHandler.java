@@ -25,6 +25,8 @@ public interface IActivityHandler {
 
     void processAndResolveDeeplink(AdjustDeeplink deeplink, long clickTime, OnDeeplinkResolvedListener callback);
 
+    void processRemoteTriggers(ResponseData responseData);
+
     boolean updateAttributionI(AdjustAttribution attribution);
 
     void launchEventResponseTasks(EventResponseData eventResponseData);

@@ -14,6 +14,7 @@ import com.adjust.sdk.AdjustEvent;
 import com.adjust.sdk.AdjustEventFailure;
 import com.adjust.sdk.AdjustEventSuccess;
 import com.adjust.sdk.AdjustFactory;
+import com.adjust.sdk.AdjustRemoteTrigger;
 import com.adjust.sdk.AdjustSessionFailure;
 import com.adjust.sdk.AdjustSessionSuccess;
 import com.adjust.sdk.AdjustStoreInfo;
@@ -27,6 +28,7 @@ import com.adjust.sdk.OnDeferredDeeplinkResponseListener;
 import com.adjust.sdk.OnEventTrackingFailedListener;
 import com.adjust.sdk.OnEventTrackingSucceededListener;
 import com.adjust.sdk.OnGoogleAdIdReadListener;
+import com.adjust.sdk.OnRemoteTriggerListener;
 import com.adjust.sdk.OnSdkVersionReadListener;
 import com.adjust.sdk.OnIsEnabledListener;
 import com.adjust.sdk.OnSessionTrackingFailedListener;
@@ -169,6 +171,7 @@ public class AdjustBridgeInstance {
             Object sessionFailureCallbackNameField = jsonAdjustConfig.get("sessionFailureCallbackName");
             Object isOpeningDeferredDeeplinkEnabledField = jsonAdjustConfig.get("isOpeningDeferredDeeplinkEnabled");
             Object deferredDeeplinkCallbackNameField = jsonAdjustConfig.get("deferredDeeplinkCallbackName");
+            Object remoteTriggerCallbackNameField = jsonAdjustConfig.get("remoteTriggerCallbackName");
             Object fbPixelDefaultEventTokenField = jsonAdjustConfig.get("fbPixelDefaultEventToken");
             Object fbPixelMappingField = jsonAdjustConfig.get("fbPixelMapping");
             Object urlStrategyDomainsField = jsonAdjustConfig.get("urlStrategyDomains");
@@ -328,6 +331,17 @@ public class AdjustBridgeInstance {
                     public boolean launchReceivedDeeplink(Uri deeplink) {
                         AdjustBridgeUtil.execSingleValueCallback(webView, deferredDeeplinkCallbackName, deeplink.toString());
                         return isOpeningDeferredDeeplinkEnabled;
+                    }
+                });
+            }
+
+            // Remote trigger callback
+            final String remoteTriggerCallbackName = AdjustBridgeUtil.fieldToString(remoteTriggerCallbackNameField);
+            if (remoteTriggerCallbackName != null) {
+                adjustConfig.setOnRemoteTriggerListener(new OnRemoteTriggerListener() {
+                    @Override
+                    public void onRemoteTrigger(AdjustRemoteTrigger remoteTrigger) {
+                        AdjustBridgeUtil.execRemoteTriggerCallbackCommand(webView, remoteTriggerCallbackName, remoteTrigger);
                     }
                 });
             }

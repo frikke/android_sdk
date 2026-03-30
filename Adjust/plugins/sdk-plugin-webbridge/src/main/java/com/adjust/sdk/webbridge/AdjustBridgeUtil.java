@@ -7,6 +7,7 @@ import com.adjust.sdk.AdjustAttribution;
 import com.adjust.sdk.AdjustEventFailure;
 import com.adjust.sdk.AdjustEventSuccess;
 import com.adjust.sdk.AdjustFactory;
+import com.adjust.sdk.AdjustRemoteTrigger;
 import com.adjust.sdk.AdjustSessionFailure;
 import com.adjust.sdk.AdjustSessionSuccess;
 import com.adjust.sdk.ILogger;
@@ -218,6 +219,25 @@ public class AdjustBridgeUtil {
             jsonEventFailure.put("callbackId", eventFailure.callbackId == null ? JSONObject.NULL : eventFailure.callbackId);
             jsonEventFailure.put("jsonResponse", eventFailure.jsonResponse == null ? JSONObject.NULL : eventFailure.jsonResponse);
             execNativeCallback(webView, commandName, jsonEventFailure.toString());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void execRemoteTriggerCallbackCommand(final WebView webView, final String commandName, final AdjustRemoteTrigger remoteTrigger) {
+        if (webView == null) {
+            return;
+        }
+        if (remoteTrigger == null) {
+            return;
+        }
+
+        JSONObject jsonRemoteTrigger = new JSONObject();
+        try {
+            jsonRemoteTrigger.put("label", remoteTrigger.getLabel() == null ? JSONObject.NULL : remoteTrigger.getLabel());
+            jsonRemoteTrigger.put("payload", remoteTrigger.getPayload() == null ? JSONObject.NULL : remoteTrigger.getPayload());
+
+            execNativeCallback(webView, commandName, jsonRemoteTrigger.toString());
         } catch (Exception e) {
             e.printStackTrace();
         }
