@@ -1,3 +1,9 @@
+### Version 5.6.1 (16th April 2026)
+#### Changed
+- Updated the Adjust Signature library version to 3.67.0.
+
+---
+
 ### Version 5.6.0 (30th March 2026)
 #### Added 
 - Added `setOnRemoteTriggerListener` method to `AdjustConfig` to allow receiving remote trigger updates sent by Adjust backend.
